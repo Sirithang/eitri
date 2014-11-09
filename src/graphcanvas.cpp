@@ -4,31 +4,54 @@
 #include <QKeyEvent>
 #include <QDebug>
 
+#define CIRCLE_WIDTH 6
+#define HEADER_H 20
 
-OperationBox::OperationBox(QColor header, GraphCanvas* pOwner):
-    owner(pOwner)
+QRectF OperationBox::boundingRect() const
+ {
+     qreal penWidth = 1;
+     return QRectF(-15, -15,
+                   115, 95);
+ }
+
+void OperationBox::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
-    box = QRect(0,0,100,80);
-    headerColor = header;
-}
+    QRectF bbox = boundingRect();
+    bbox.setWidth(bbox.width() - 30);
+    bbox.setHeight(bbox.height() - 30);
 
-void OperationBox::draw(QPainter *painter)
-{
-    painter->save();
-
-    if(owner->_selected == this)
-        painter->setPen(Qt::yellow);
+    if(isSelected())
+        painter->setPen(Qt::red);
     else
         painter->setPen(Qt::black);
 
-    //body
-    painter->drawRoundedRect(box, 5.0f, 5.0f);
+    painter->drawRoundedRect(0, 0, bbox.width(), bbox.height(), 5, 5);
 
-    painter->setBrush(headerColor);
-    //body
-    painter->drawRoundedRect(box.x(), box.y(), box.width(), 30, 5.0f, 5.0f);
+    if(isOutput)
+        painter->setBrush(QColor(255,100,100));
+    else
+        painter->setBrush(QColor(100,100,100));
 
-    painter->restore();
+    painter->drawRoundedRect(0,0,bbox.width(),HEADER_H,5,5);
+
+
+    int datas[2] = {inputCount, outputCount};
+    int xPos[2] = {0, bbox.width()};
+
+    for(int idx = 0; idx < 2; ++idx)
+    {
+        if(datas[idx] == 0)
+            continue;
+
+        int step = (bbox.height() - HEADER_H) / datas[idx];
+        int first = step / 2;
+
+        for(int i = 0; i < datas[idx]; ++i)
+        {
+            painter->setBrush(Qt::yellow);
+            painter->drawEllipse(xPos[idx] - CIRCLE_WIDTH, HEADER_H + first + step * i - CIRCLE_WIDTH, CIRCLE_WIDTH*2, CIRCLE_WIDTH*2);
+        }
+    }
 }
 
 
@@ -37,15 +60,17 @@ void OperationBox::draw(QPainter *painter)
 
 
 GraphCanvas::GraphCanvas(QWidget *parent) :
-    QWidget(parent)
+    QGraphicsView(parent)
 {
     g = new Graph();
     createGraph(g);
 
-    setBackgroundRole(QPalette::Base);
-    setAutoFillBackground(true);
+    setScene(&_scene);
 
-    setFocusPolicy(Qt::ClickFocus);
+    setSceneRect(5000 * -0.5f, 5000 * -0.5f, 5000, 5000);
+    setDragMode(ScrollHandDrag);
+    setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
     OpsDialog::sAllOps.clear();
     OpsDialog::sAllOps.append("output");
@@ -57,25 +82,21 @@ GraphCanvas::GraphCanvas(QWidget *parent) :
 
 //===========================================
 
-void GraphCanvas::paintEvent(QPaintEvent *e)
-{
-    QPainter p(this);
-
-    qDebug() << "paint";
-
-    for(int i = 0; i < this->outputsBox.count(); ++i)
-    {
-        this->outputsBox[i]->draw(&p);
-    }
-}
 
 void GraphCanvas::createOutput(QPoint p)
 {
     int id = addOutput(g);
 
-    OperationBox* b = new OperationBox(Qt::red, this);
-    b->box.moveTo(mapFromGlobal(p));
+    OperationBox* b = new OperationBox();
+    b->owner = this;
+    b->setPos(mapToScene(mapFromGlobal(p)));
     b->op = id;
+    b->inputCount = 1;
+    b->outputCount = 0;
+    b->isOutput = true;
+
+    b->setFlags(QGraphicsItem::ItemIsMovable | QGraphicsItem::ItemIsSelectable);
+    _scene.addItem(b);
 
     this->outputsBox.push_back(b);
 }
@@ -100,43 +121,20 @@ void GraphCanvas::keyPressEvent(QKeyEvent *e)
 
 //============================================
 
-void GraphCanvas::mousePressEvent(QMouseEvent *e)
-{
-    _pressPos = e->pos();
-    _selected = NULL;
+void GraphCanvas::wheelEvent(QWheelEvent* event) {
 
-    update();
+  setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
 
-    for(int i = 0; i < outputsBox.count(); ++i)
-    {
-        if(outputsBox[i]->box.contains(e->pos()))
-        {
-            _selected = outputsBox[i];
-            return;
-        }
-    }
+  // Scale the view / do the zoom
+  double scaleFactor = 1.15;
+  if(event->delta() > 0) {
+      // Zoom in
+      scale(scaleFactor, scaleFactor);
+  } else {
+      // Zooming out
+      scale(1.0 / scaleFactor, 1.0 / scaleFactor);
+  }
 
-
-    QWidget::mousePressEvent(e);
-}
-
-void GraphCanvas::mouseReleaseEvent(QMouseEvent *e)
-{
-
-}
-
-void GraphCanvas::mouseMoveEvent(QMouseEvent* e)
-{
-    QPoint delta = e->pos() - _pressPos;
-
-    _pressPos = e->pos();
-
-    if(_selected)
-    {
-        _selected->box.translate(delta);
-        update();
-        return;
-    }
-
-    QWidget::mouseMoveEvent(e);
+  // Don't call superclass handler here
+  // as wheel is normally used for moving scrollbars
 }

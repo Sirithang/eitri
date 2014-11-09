@@ -3,27 +3,31 @@
 
 #include <QWidget>
 #include <QPainter>
+#include <QGraphicsView>
+#include <QGraphicsItem>
 #include <QVector2D>
 
 #include "eitri.h"
 
 class GraphCanvas;
 
-class OperationBox
+class OperationBox : public QGraphicsItem
 {
 public:
     GraphCanvas* owner;
-    QRect box;
+    bool isOutput;
 
-    QColor headerColor;
-    unsigned int op;
+    int outputCount;
+    int inputCount;
 
-    OperationBox(QColor header, GraphCanvas* pOwner);
-    void draw(QPainter* painter);
+    int op;
+
+    QRectF boundingRect() const;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
 };
 
 
-class GraphCanvas : public QWidget
+class GraphCanvas : public QGraphicsView
 {
     Q_OBJECT
 public:
@@ -31,15 +35,13 @@ public:
 
     Graph* g;
     OperationBox* _selected;
+    QGraphicsScene _scene;
 
     void createOutput(QPoint p);
 
 protected:
     void keyPressEvent(QKeyEvent* e);
-    void mousePressEvent(QMouseEvent* e);
-    void mouseReleaseEvent(QMouseEvent* e);
-    void mouseMoveEvent(QMouseEvent * e);
-    void paintEvent(QPaintEvent* e);
+    void wheelEvent(QWheelEvent* event);
 
     void drawOperation(QPainter* painter);
 

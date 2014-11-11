@@ -27,6 +27,25 @@ extern "C"
 
     typedef void (*eitri_opFunc)(eitri_OpFuncParams params);
 
+
+    enum eitri_ParamType
+    {
+        FLOAT,
+        STRING
+    };
+
+    typedef union
+    {
+        float fParam;
+        char sParam[2048];
+    } eitri_OpParamValue;
+
+    typedef struct
+    {
+        eitri_ParamType type;
+        const char name[1024];
+    } eitri_OpParams;
+
     typedef struct
     {
         //
@@ -38,6 +57,9 @@ extern "C"
 
         //this function is called to perform the operation
         eitri_opFunc func;
+
+        //eitri_OpParams params[32];
+        //unsigned int paramsCount;
 
         char name[256];
     } eitri_Operation;

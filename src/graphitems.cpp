@@ -34,21 +34,15 @@ void OperationConnector::mousePressEvent(QGraphicsSceneMouseEvent *event)
 {
     _splines.push_back(new QGraphicsPathItem());
     scene()->addItem(_splines.back());
-
-     //QGraphicsItem::mousePressEvent(event);
 }
 
 void OperationConnector::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
 {
     QPainterPath p(this->scenePos());
 
-    //p.cubicTo(pos() + QPointF(1,0), event->pos() + QPointF(1,0), event->pos());
-
     p.lineTo(event->scenePos());
 
     _splines.back()->setPath(p);
-
-     //QGraphicsItem::mouseMoveEvent(event);
 }
 
 void OperationConnector::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
@@ -63,8 +57,6 @@ void OperationConnector::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
         OperationConnector* c = (OperationConnector*)item;
         if(isInput != c->isInput)
         {//we can't pair input w/ input or output w/ output
-
-
 
             OperationConnector* input = isInput ? this : c;
             OperationConnector* output = isInput ? c : this;
@@ -82,7 +74,7 @@ void OperationConnector::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
             }
 
             input->_connectedTo.push_back(output);
-            input->_connectedTo.push_back(input);
+            output->_connectedTo.push_back(input);
 
             return;//exit the function we have handled things
         }
@@ -93,25 +85,27 @@ void OperationConnector::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
     scene()->removeItem(_splines.back());
     delete _splines.back();
     _splines.removeLast();
-
-    //QGraphicsItem::mouseReleaseEvent(event);
 }
 
 void OperationConnector::updateSpline()
 {
+    qDebug() <<"updating spline";
+
     OperationConnector* target = this;
     if(isInput && _connectedTo.count() != 0)
     {
         target = _connectedTo[0];
     }
 
-    for(int i = 0; i < _splines.count(); ++i)
+    Q_ASSERT(target->_splines.count() == target->_connectedTo.count());
+
+    for(int i = 0; i < target->_splines.count(); ++i)
     {
         QPainterPath p(target->scenePos());
 
-        p.lineTo(_connectedTo[i]->scenePos());
+        p.lineTo (target->_connectedTo[i]->scenePos());
 
-        _splines[i]->setPath(p);
+        target->_splines[i]->setPath(p);
     }
 }
 
@@ -208,7 +202,7 @@ void OperationBox::paint(QPainter *painter, const QStyleOptionGraphicsItem *opti
 
 //----------------------
 
-void OperationBox::dragMoveEvent(QGraphicsSceneDragDropEvent *event)
+void OperationBox::mouseMoveEvent(QGraphicsSceneMouseEvent * event)
 {
     for(int i = 0; i < inConnectors.count();++i)
     {
@@ -218,5 +212,5 @@ void OperationBox::dragMoveEvent(QGraphicsSceneDragDropEvent *event)
     if(outConnector)
         outConnector->updateSpline();
 
-    QGraphicsItem::dragMoveEvent(event);
+    QGraphicsItem::mouseMoveEvent(event);
 }

@@ -62,7 +62,7 @@ public:
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
 
 
-    void dragMoveEvent(QGraphicsSceneDragDropEvent * event);
+    void mouseMoveEvent(QGraphicsSceneMouseEvent * event);
 };
 
 

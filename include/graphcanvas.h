@@ -7,25 +7,11 @@
 #include <QGraphicsItem>
 #include <QVector2D>
 
+#include "graphitem.h"
+
 #include "eitri.h"
 
 class GraphCanvas;
-
-class OperationBox : public QGraphicsItem
-{
-public:
-    GraphCanvas* owner;
-    bool isOutput;
-
-    int outputCount;
-    int inputCount;
-
-    int op;
-
-    QRectF boundingRect() const;
-    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
-};
-
 
 class GraphCanvas : public QGraphicsView
 {
@@ -33,11 +19,12 @@ class GraphCanvas : public QGraphicsView
 public:
     explicit GraphCanvas(QWidget *parent = 0);
 
-    Graph* g;
+    eitri_Graph* g;
     OperationBox* _selected;
     QGraphicsScene _scene;
 
     void createOutput(QPoint p);
+    void createOps(QPoint p, QString op);
 
 protected:
     void keyPressEvent(QKeyEvent* e);

@@ -7,7 +7,7 @@ extern "C"
         unsigned int w,h;
         unsigned int nbChannel;
         unsigned int channelSize;
-    } PicturData;
+    } eitri_PicturData;
 
     //===================================================
 
@@ -19,13 +19,13 @@ extern "C"
     {
         unsigned char inputImagesCount;
         void** inputImages;
-        PicturData* inputImagesInfos;
+        eitri_PicturData* inputImagesInfos;
 
         void*  outputImage;
-        PicturData outputImageInfo;
-    } OpParams;
+        eitri_PicturData outputImageInfo;
+    } eitri_OpFuncParams;
 
-    typedef void (*opFunc)(OpParams params);
+    typedef void (*eitri_opFunc)(eitri_OpFuncParams params);
 
     typedef struct
     {
@@ -37,10 +37,10 @@ extern "C"
         unsigned char inputChanelCount[256];
 
         //this function is called to perform the operation
-        opFunc func;
+        eitri_opFunc func;
 
         char name[256];
-    } Operation;
+    } eitri_Operation;
 
     //=========================================================
 
@@ -48,7 +48,7 @@ extern "C"
     {
         char    name[1024];
         int     outputOp;
-    } Output;
+    } eitri_Output;
 
     //=========================================================
 
@@ -56,40 +56,50 @@ extern "C"
     {
         int operation;
         int inputs[16];
-    } OpInstance;
+    } eitri_OpInstance;
 
     //==========================================================
 
     typedef struct
     {
-        unsigned char   outputCount;
-        Output          outputs[256];
-        unsigned char   outputFreeCount;
-        unsigned char   outputFree[256];
+        unsigned char       outputCount;
+        eitri_Output        outputs[256];
+        unsigned char       outputFreeCount;
+        unsigned char       outputFree[256];
 
-        unsigned int    operationsCount;
-        OpInstance      operations[2048];
+        unsigned int        operationsCount;
+        eitri_OpInstance    operations[2048];
 
-        unsigned int    freeopsListCount;
-        unsigned int    freeops[1024];
+        unsigned int        freeopsListCount;
+        unsigned int        freeops[1024];
 
-    }Graph;
+    }eitri_Graph;
 
 
-    void init();
+    //===========================================================
+
+    typedef struct
+    {
+        int         opsCount;
+        eitri_Operation   ops[1024];
+    } eitri_OpsDatabase;
+
+    extern eitri_OpsDatabase eitri_gOpsDB;
+
+    void eitri_init();
 
     //this is called by the engine on init.
     //it create the map op name <-> associated Op
     //add new ops in that functions
-    void registerOperations();
+    void eitri_registerOperations();
 
-    void createGraph(Graph* g);
-    int addOutput(Graph* g);
+    void eitri_createGraph(eitri_Graph* g);
+    int eitri_addOutput(eitri_Graph* g);
 
-    void addOperation(Graph* g, const char* name);
-    int generateOutput(Graph* g, const char* outputName);
+    int eitri_addOperation(eitri_Graph* g, const char* name);
+    int eitri_generateOutput(eitri_Graph* g, const char* outputName);
 
     //============== operation impl. =============================
 
-    void outputOp(OpParams params);
+    void eitri_noiseOp(eitri_OpFuncParams params);
 }

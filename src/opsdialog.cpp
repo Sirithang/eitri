@@ -35,6 +35,11 @@ void OpsDialog::opSelected(QListWidgetItem *item)
         _graphOwner->createOutput(this->pos());
         close();
     }
+    else
+    {
+        _graphOwner->createOps(this->pos(), item->text());
+        close();
+    }
 }
 
 void OpsDialog::lineModified(const QString txt)

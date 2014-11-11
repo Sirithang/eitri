@@ -17,11 +17,13 @@ SOURCES += src/main.cpp\
         src/etrimain.cpp \
     EitriEngine/eitri.cpp \
     src/graphcanvas.cpp \
-    src/opsdialog.cpp
+    src/opsdialog.cpp \
+    src/graphitems.cpp
 
 HEADERS  += include/etrimain.h \
     EitriEngine/eitri.h \
     include/graphcanvas.h \
-    include/opsdialog.h
+    include/opsdialog.h \
+    include/graphitem.h
 
 FORMS    += etrimain.ui

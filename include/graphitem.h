@@ -50,19 +50,22 @@ public:
     QList<OperationConnector*>  inConnectors;
     OperationConnector*         outConnector;
 
+    QPixmap preview;
+
     int op;
 
     QGraphicsTextItem headerText;
 
     OperationBox(GraphCanvas* pOwner, int pOp, bool pIsOutput);
 
+    void updatePreview();
+
     int type() const{ return TypeBox; }
 
     QRectF boundingRect() const;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
-
-
     void mouseMoveEvent(QGraphicsSceneMouseEvent * event);
+    void mousePressEvent(QGraphicsSceneMouseEvent* event);
 };
 
 

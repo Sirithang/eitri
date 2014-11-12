@@ -22,7 +22,6 @@ GraphCanvas::GraphCanvas(QWidget *parent) :
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
     OpsDialog::sAllOps.clear();
-    OpsDialog::sAllOps.append("output");
 
     qDebug() <<"Db have : "<<eitri_gOpsDB.opsCount;
 
@@ -38,19 +37,6 @@ GraphCanvas::GraphCanvas(QWidget *parent) :
 
 //===========================================
 
-
-void GraphCanvas::createOutput(QPoint p)
-{
-    int id = eitri_addOutput(g);
-
-    OperationBox* b = new OperationBox(this, id, true);
-
-    b->setPos(mapToScene(mapFromGlobal(p)));
-
-    _scene.addItem(b);
-
-    this->outputsBox.push_back(b);
-}
 
 void GraphCanvas::createOps(QPoint p, QString op)
 {

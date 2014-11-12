@@ -76,6 +76,8 @@ void OperationConnector::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
             input->_connectedTo.push_back(output);
             output->_connectedTo.push_back(input);
 
+            eitri_connectOps(owner->owner->g, input->owner->op, output->owner->op, id);
+
             return;//exit the function we have handled things
         }
     }
@@ -89,8 +91,6 @@ void OperationConnector::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
 
 void OperationConnector::updateSpline()
 {
-    qDebug() <<"updating spline";
-
     OperationConnector* target = this;
     if(isInput && _connectedTo.count() != 0)
     {
@@ -123,44 +123,29 @@ OperationBox::OperationBox(GraphCanvas *pOwner, int pOp, bool pIsOutput)
 
     headerText.setParentItem(this);
 
-    if(isOutput)
+    int opTemplate = owner->g->operations[op].operation;
+    int inpCount = eitri_gOpsDB.ops[opTemplate].inputImagesCount;
+
+    int step = boundingRect().height() / inpCount;
+    int first = step * 0.5f;
+
+    for(int i = 0 ; i < inpCount; ++i)
     {
         OperationConnector* c = new OperationConnector();
         c->owner = this;
-        c->id = 0;
+        c->id = i;
         c->isInput = true;
 
         c->setParentItem(this);
-        c->setPos(0, boundingRect().height() * 0.5f);
-
-        //c->setFlags();
+        c->setPos(0, first + step * i);
 
         inConnectors.push_back(c);
-
-        headerText.setPlainText(owner->g->outputs[op].name);
     }
-    else
+
+    isOutput = owner->g->operations[op].isOutput;
+
+    if(!isOutput)
     {
-        int opTemplate = owner->g->operations[op].operation;
-        int inpCount = eitri_gOpsDB.ops[opTemplate].inputImagesCount;
-
-        int step = boundingRect().height() / inpCount;
-        int first = step * 0.5f;
-
-        for(int i = 0 ; i < inpCount; ++i)
-        {
-            OperationConnector* c = new OperationConnector();
-            c->owner = this;
-            c->id = i;
-            c->isInput = true;
-
-            c->setParentItem(this);
-            c->setPos(0, first + step * i);
-
-            inConnectors.push_back(c);
-        }
-
-
         //OUTPUT
         OperationConnector* c = new OperationConnector();
         c->owner = this;
@@ -171,8 +156,24 @@ OperationBox::OperationBox(GraphCanvas *pOwner, int pOp, bool pIsOutput)
         c->setPos(boundingRect().width(), boundingRect().height()*0.5f);
 
         outConnector = c;
+    }
 
-        headerText.setPlainText(eitri_gOpsDB.ops[opTemplate].name);
+    headerText.setPlainText(eitri_gOpsDB.ops[opTemplate].name);
+
+    updatePreview();
+}
+
+void OperationBox::updatePreview()
+{
+    eitri_doOperation(owner->g, op);
+
+    eitri_OpInstance* inst = &owner->g->operations[op];
+
+    if(inst->_cachedResult.data)
+    {
+        QImage img((const uchar*)inst->_cachedResult.data, inst->_cachedResult.w, inst->_cachedResult.h, QImage::Format_ARGB32);
+
+        preview = QPixmap::fromImage(img);
     }
 }
 
@@ -184,6 +185,8 @@ QRectF OperationBox::boundingRect() const
 void OperationBox::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
     QRectF bbox = boundingRect();
+
+    int bodyH = bbox.height() - HEADER_H;
 
     if(isSelected())
         painter->setPen(Qt::red);
@@ -198,6 +201,8 @@ void OperationBox::paint(QPainter *painter, const QStyleOptionGraphicsItem *opti
         painter->setBrush(QColor(100,100,100));
 
     painter->drawRoundedRect(0,0,bbox.width(),HEADER_H,5,5);
+
+    painter->drawPixmap(bbox.width()*0.5f - bodyH*0.5f, HEADER_H, bodyH, bodyH, preview);
 }
 
 //----------------------
@@ -213,4 +218,9 @@ void OperationBox::mouseMoveEvent(QGraphicsSceneMouseEvent * event)
         outConnector->updateSpline();
 
     QGraphicsItem::mouseMoveEvent(event);
+}
+
+void OperationBox::mousePressEvent(QGraphicsSceneMouseEvent *event)
+{
+    updatePreview();
 }

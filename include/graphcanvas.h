@@ -23,7 +23,6 @@ public:
     OperationBox* _selected;
     QGraphicsScene _scene;
 
-    void createOutput(QPoint p);
     void createOps(QPoint p, QString op);
 
 protected:

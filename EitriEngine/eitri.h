@@ -7,26 +7,50 @@ extern "C"
         unsigned int w,h;
         unsigned int nbChannel;
         unsigned int channelSize;
+        void* data;
     } eitri_PicturData;
+
+    int eitri_getPictureDataSize(eitri_PicturData* d);
+    //allocate (& free previously existing) buffer
+    void eitri_allocatePictureData(eitri_PicturData* d);
+
+    //=========================================================
+
+    typedef struct
+    {
+        int operation;
+        int inputs[16];
+
+        eitri_PicturData _cachedResult;
+        int isOutput;
+    } eitri_OpInstance;
+
+    //==========================================================
+
+    typedef struct
+    {
+        unsigned char       outputCount;
+        int        outputs[256];
+//        eitri_Output        outputs[256];
+        unsigned char       outputFreeCount;
+        unsigned char       outputFree[256];
+
+        unsigned int        operationsCount;
+        eitri_OpInstance    operations[2048];
+
+        unsigned int        freeopsListCount;
+        unsigned int        freeops[1024];
+
+    } eitri_Graph;
+
 
     //===================================================
 
-    /* Input parameter to an operation
-     * Receive the number of input pictures (the op should define that)
-     * along with their size and data (a flat array of w*h*nbchannel)
-    */
-    typedef struct
-    {
-        unsigned char inputImagesCount;
-        void** inputImages;
-        eitri_PicturData* inputImagesInfos;
+    //inst is the instance of the operation. It contain all info for
+    //doing the op (connected input, where to output etc...
+    typedef void (*eitri_opFunc)(eitri_Graph* graph, eitri_OpInstance* inst);
 
-        void*  outputImage;
-        eitri_PicturData outputImageInfo;
-    } eitri_OpFuncParams;
-
-    typedef void (*eitri_opFunc)(eitri_OpFuncParams params);
-
+    //--
 
     enum eitri_ParamType
     {
@@ -45,6 +69,8 @@ extern "C"
         eitri_ParamType type;
         const char name[1024];
     } eitri_OpParams;
+
+    //--
 
     typedef struct
     {
@@ -66,37 +92,11 @@ extern "C"
 
     //=========================================================
 
-    typedef struct
-    {
-        char    name[1024];
-        int     outputOp;
-    } eitri_Output;
-
-    //=========================================================
-
-    typedef struct
-    {
-        int operation;
-        int inputs[16];
-    } eitri_OpInstance;
-
-    //==========================================================
-
-    typedef struct
-    {
-        unsigned char       outputCount;
-        eitri_Output        outputs[256];
-        unsigned char       outputFreeCount;
-        unsigned char       outputFree[256];
-
-        unsigned int        operationsCount;
-        eitri_OpInstance    operations[2048];
-
-        unsigned int        freeopsListCount;
-        unsigned int        freeops[1024];
-
-    }eitri_Graph;
-
+//    typedef struct
+//    {
+//        char    name[1024];
+//        int     outputOp;
+//    } eitri_Output;
 
     //===========================================================
 
@@ -116,12 +116,19 @@ extern "C"
     void eitri_registerOperations();
 
     void eitri_createGraph(eitri_Graph* g);
-    int eitri_addOutput(eitri_Graph* g);
 
     int eitri_addOperation(eitri_Graph* g, const char* name);
+
+    //execute the operation, calling recursivly execute on input
+    //and stocking result in its _cachedData
+    void eitri_doOperation(eitri_Graph* g, int op);
+
+    void eitri_connectOps(eitri_Graph* g, int inputOps, int outputOps, int idx);
+
     int eitri_generateOutput(eitri_Graph* g, const char* outputName);
 
     //============== operation impl. =============================
 
-    void eitri_noiseOp(eitri_OpFuncParams params);
+    void eitri_op_output(eitri_Graph* graph, eitri_OpInstance* inst);
+    void eitri_op_noise(eitri_Graph* graph, eitri_OpInstance* inst);
 }

@@ -30,16 +30,8 @@ OpsDialog::OpsDialog(QWidget *parent, GraphCanvas* graphOwner) :
 
 void OpsDialog::opSelected(QListWidgetItem *item)
 {
-    if(item->text() == "output")
-    {
-        _graphOwner->createOutput(this->pos());
-        close();
-    }
-    else
-    {
-        _graphOwner->createOps(this->pos(), item->text());
-        close();
-    }
+    _graphOwner->createOps(this->pos(), item->text());
+    close();
 }
 
 void OpsDialog::lineModified(const QString txt)

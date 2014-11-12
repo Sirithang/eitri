@@ -33,6 +33,8 @@ GraphCanvas::GraphCanvas(QWidget *parent) :
     _selected = NULL;
 
     outputsBox.clear();
+
+    connect(&_scene,SIGNAL(selectionChanged ()), this, SLOT(updateInspector()));
 }
 
 //===========================================
@@ -89,4 +91,28 @@ void GraphCanvas::wheelEvent(QWheelEvent* event) {
 
   // Don't call superclass handler here
   // as wheel is normally used for moving scrollbars
+}
+
+//=============================================
+
+void GraphCanvas::updateInspector()
+{
+    QList<QGraphicsItem*> selectedItems = _scene.selectedItems();
+    if(selectedItems.count() == 0)
+    {
+        _paramInspector->setGraphItem(NULL);
+        return;
+    }
+
+    blockSignals(true);
+
+    while(selectedItems.count() > 1)
+    {
+        selectedItems.front()->setSelected(false);
+        selectedItems.pop_front();
+    }
+
+    blockSignals(false);
+
+    _paramInspector->setGraphItem((OperationBox*)selectedItems.front());
 }

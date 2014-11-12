@@ -3,6 +3,7 @@
 
 #include <QPointF>
 #include <QGraphicsSceneMouseEvent>
+#include <QGraphicsWidget>
 #include <QDebug>
 
 #define HEADER_H 20
@@ -174,6 +175,8 @@ void OperationBox::updatePreview()
         QImage img((const uchar*)inst->_cachedResult.data, inst->_cachedResult.w, inst->_cachedResult.h, QImage::Format_ARGB32);
 
         preview = QPixmap::fromImage(img);
+
+        owner->_previewLabel->setPixmap(preview);
     }
 }
 
@@ -193,6 +196,7 @@ void OperationBox::paint(QPainter *painter, const QStyleOptionGraphicsItem *opti
     else
         painter->setPen(Qt::black);
 
+    painter->setBrush(QColor(200,200,200));
     painter->drawRoundedRect(0, 0, bbox.width(), bbox.height(), 5, 5);
 
     if(isOutput)

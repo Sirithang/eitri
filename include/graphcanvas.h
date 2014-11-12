@@ -7,7 +7,9 @@
 #include <QGraphicsItem>
 #include <QVector2D>
 
+#include "imagelabel.h"
 #include "graphitem.h"
+#include "paraminspector.h"
 
 #include "eitri.h"
 
@@ -23,13 +25,14 @@ public:
     OperationBox* _selected;
     QGraphicsScene _scene;
 
+    ImageLabel* _previewLabel;
+    ParamInspector* _paramInspector;
+
     void createOps(QPoint p, QString op);
 
 protected:
     void keyPressEvent(QKeyEvent* e);
     void wheelEvent(QWheelEvent* event);
-
-    void drawOperation(QPainter* painter);
 
     QList<OperationBox*> outputsBox;
     QPoint _pressPos;
@@ -37,7 +40,7 @@ protected:
 signals:
 
 public slots:
-
+    void updateInspector();
 };
 
 #endif // GRAPHCANVAS_H

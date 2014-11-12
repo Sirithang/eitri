@@ -16,10 +16,33 @@ extern "C"
 
     //=========================================================
 
+    typedef enum
+    {
+        EITRI_PARAM_FLOAT,
+        EITRI_PARAM_STRING
+    }eitri_ParamType;
+
+    typedef union
+    {
+        float fParam;
+        char sParam[2048];
+    } eitri_OpParamValue;
+
+    typedef struct
+    {
+        eitri_ParamType type;
+        char name[1024];
+    } eitri_OpParams;
+
+    //=========================================================
+
     typedef struct
     {
         int operation;
         int inputs[16];
+
+        //this got a 1:1 mapping to params in eitri_Operations
+        eitri_OpParamValue paramsValues[32];
 
         eitri_PicturData _cachedResult;
         int isOutput;
@@ -31,7 +54,7 @@ extern "C"
     {
         unsigned char       outputCount;
         int        outputs[256];
-//        eitri_Output        outputs[256];
+
         unsigned char       outputFreeCount;
         unsigned char       outputFree[256];
 
@@ -41,6 +64,8 @@ extern "C"
         unsigned int        freeopsListCount;
         unsigned int        freeops[1024];
 
+
+        unsigned int        seed;
     } eitri_Graph;
 
 
@@ -48,29 +73,7 @@ extern "C"
 
     //inst is the instance of the operation. It contain all info for
     //doing the op (connected input, where to output etc...
-    typedef void (*eitri_opFunc)(eitri_Graph* graph, eitri_OpInstance* inst);
-
-    //--
-
-    enum eitri_ParamType
-    {
-        FLOAT,
-        STRING
-    };
-
-    typedef union
-    {
-        float fParam;
-        char sParam[2048];
-    } eitri_OpParamValue;
-
-    typedef struct
-    {
-        eitri_ParamType type;
-        const char name[1024];
-    } eitri_OpParams;
-
-    //--
+    typedef void (*eitri_opFunc)(eitri_Graph* graph, int opInst);
 
     typedef struct
     {
@@ -84,19 +87,11 @@ extern "C"
         //this function is called to perform the operation
         eitri_opFunc func;
 
-        //eitri_OpParams params[32];
-        //unsigned int paramsCount;
+        eitri_OpParams params[32];
+        unsigned int paramsCount;
 
         char name[256];
     } eitri_Operation;
-
-    //=========================================================
-
-//    typedef struct
-//    {
-//        char    name[1024];
-//        int     outputOp;
-//    } eitri_Output;
 
     //===========================================================
 
@@ -127,8 +122,14 @@ extern "C"
 
     int eitri_generateOutput(eitri_Graph* g, const char* outputName);
 
+    // --- param management
+
+    //op here is the op template, not the op instance. This is rarely called by user
+    //only in eitri_registerOperations to define all info
+    void eitri_addParam(int op, const char* name, eitri_ParamType type);
+
     //============== operation impl. =============================
 
-    void eitri_op_output(eitri_Graph* graph, eitri_OpInstance* inst);
-    void eitri_op_noise(eitri_Graph* graph, eitri_OpInstance* inst);
+    void eitri_op_output(eitri_Graph* graph, int opInst);
+    void eitri_op_noise(eitri_Graph* graph,  int opInst);
 }

@@ -16,7 +16,7 @@
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout">
     <item row="0" column="0">
-     <widget class="GraphCanvas" name="widget" native="true"/>
+     <widget class="GraphCanvas" name="graphCanvas" native="true"/>
     </item>
    </layout>
   </widget>
@@ -40,10 +40,37 @@
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <widget class="QDockWidget" name="InspectorDock">
+   <property name="windowTitle">
+    <string>Inspector</string>
+   </property>
    <attribute name="dockWidgetArea">
     <number>1</number>
    </attribute>
-   <widget class="QWidget" name="dockWidgetContents_2"/>
+   <widget class="QWidget" name="dockWidgetContents_2">
+    <layout class="QVBoxLayout" name="verticalLayout">
+     <item>
+      <widget class="ParamInspector" name="paramInsp" native="true"/>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="preview">
+   <property name="windowTitle">
+    <string>preview</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="QWidget" name="previewInside">
+    <property name="layoutDirection">
+     <enum>Qt::LeftToRight</enum>
+    </property>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="ImageLabel" name="previewLabel" native="true"/>
+     </item>
+    </layout>
+   </widget>
   </widget>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
@@ -52,6 +79,18 @@
    <class>GraphCanvas</class>
    <extends>QWidget</extends>
    <header>graphcanvas.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>ImageLabel</class>
+   <extends>QWidget</extends>
+   <header>imagelabel.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>ParamInspector</class>
+   <extends>QWidget</extends>
+   <header>paraminspector.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

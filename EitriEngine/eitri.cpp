@@ -20,6 +20,9 @@ void eitri_registerOperations()
         eitri_gOpsDB.ops[eitri_gOpsDB.opsCount].inputImagesCount = 1;
         eitri_gOpsDB.ops[eitri_gOpsDB.opsCount].func = eitri_op_output;
 
+        eitri_addParam(eitri_gOpsDB.opsCount, "test1", EITRI_PARAM_FLOAT);
+        eitri_addParam(eitri_gOpsDB.opsCount, "test6", EITRI_PARAM_FLOAT);
+
         eitri_gOpsDB.opsCount += 1;
     }
 
@@ -28,6 +31,8 @@ void eitri_registerOperations()
         strncpy(eitri_gOpsDB.ops[eitri_gOpsDB.opsCount].name, "noise", 256);
         eitri_gOpsDB.ops[eitri_gOpsDB.opsCount].inputImagesCount = 0;
         eitri_gOpsDB.ops[eitri_gOpsDB.opsCount].func = eitri_op_noise;
+
+        eitri_addParam(eitri_gOpsDB.opsCount, "blublu", EITRI_PARAM_FLOAT);
 
         eitri_gOpsDB.opsCount += 1;
     }
@@ -40,6 +45,8 @@ void eitri_createGraph(eitri_Graph *g)
     g->freeopsListCount = 0;
     g->outputFreeCount = 0;
     g->operationsCount = 0;
+
+    g->seed = rand();
 }
 
 int eitri_getPictureDataSize(eitri_PicturData *d)
@@ -154,7 +161,7 @@ void eitri_doOperation(eitri_Graph *g, int op)
 {
     if(g->operations[op].operation != -1)
     {
-        eitri_gOpsDB.ops[g->operations[op].operation].func(g, &g->operations[op]);
+        eitri_gOpsDB.ops[g->operations[op].operation].func(g, op);
     }
 }
 
@@ -167,11 +174,24 @@ void eitri_connectOps(eitri_Graph *g, int inputOps, int outputOps, int idx)
     in->inputs[idx] = outputOps;
 }
 
+//----- param management
+
+void eitri_addParam(int op, const char *name, eitri_ParamType type)
+{
+    int c = eitri_gOpsDB.ops[op].paramsCount;
+    strncpy(eitri_gOpsDB.ops[op].params[c].name, name, 256);
+    eitri_gOpsDB.ops[op].params[c].type = type;
+
+    eitri_gOpsDB.ops[op].paramsCount += 1;
+}
+
 
 //====================================================================
 
-void eitri_op_output(eitri_Graph* graph, eitri_OpInstance* inst)
+void eitri_op_output(eitri_Graph* graph,  int opInst)
 {
+    eitri_OpInstance* inst = &graph->operations[opInst];
+
     if(inst->inputs[0] == -1)
         return;
 
@@ -187,9 +207,14 @@ void eitri_op_output(eitri_Graph* graph, eitri_OpInstance* inst)
     memcpy(inst->_cachedResult.data, input1->_cachedResult.data, eitri_getPictureDataSize(&input1->_cachedResult));
 }
 
-void eitri_op_noise(eitri_Graph* graph, eitri_OpInstance* inst)
+void eitri_op_noise(eitri_Graph* graph,  int opInst)
 {
+    eitri_OpInstance* inst = &graph->operations[opInst];
+
     eitri_allocatePictureData(&inst->_cachedResult);
+
+    //this allow to be deterministic no matter when or how many this opInstance is called
+    srand(graph->seed + opInst);
 
     for(int i = 0; i < inst->_cachedResult.w * inst->_cachedResult.h * 4; i += 4)
     {

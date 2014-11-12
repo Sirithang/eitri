@@ -8,6 +8,9 @@ EtriMain::EtriMain(QWidget *parent) :
 {
     eitri_init();
     ui->setupUi(this);
+
+    ui->graphCanvas->_previewLabel = ui->previewLabel;
+    ui->graphCanvas->_paramInspector = ui->paramInsp;
 }
 
 EtriMain::~EtriMain()

@@ -2,29 +2,41 @@
 
 extern "C"
 {
+
+    typedef struct
+    {
+        unsigned char b,g,r,a;
+    } eitri_Color;
+
+
     typedef struct
     {
         unsigned int w,h;
         unsigned int nbChannel;
         unsigned int channelSize;
-        void* data;
+        char* data;
     } eitri_PicturData;
 
     int eitri_getPictureDataSize(eitri_PicturData* d);
     //allocate (& free previously existing) buffer
     void eitri_allocatePictureData(eitri_PicturData* d);
 
+    //this return the adress corresponding to the u/v adress (only decimal part is used)
+    char* eitri_samplePictureData(eitri_PicturData* d, float u, float v);
+
     //=========================================================
 
     typedef enum
     {
         EITRI_PARAM_FLOAT,
-        EITRI_PARAM_STRING
+        EITRI_PARAM_STRING,
+        EITRI_PARAM_COLOR
     }eitri_ParamType;
 
     typedef union
     {
         float fParam;
+        eitri_Color colParam;
         char sParam[2048];
     } eitri_OpParamValue;
 
@@ -33,6 +45,9 @@ extern "C"
         eitri_ParamType type;
         char name[1024];
     } eitri_OpParams;
+
+    //return the default value for given type ( for float, (0,0,0,1) for color )
+    eitri_OpParamValue eitri_getDefaultParamValue(eitri_ParamType type);
 
     //=========================================================
 
@@ -64,7 +79,6 @@ extern "C"
         unsigned int        freeopsListCount;
         unsigned int        freeops[1024];
 
-
         unsigned int        seed;
     } eitri_Graph;
 
@@ -77,18 +91,18 @@ extern "C"
 
     typedef struct
     {
-        //
+        //how many input that op take
         unsigned char inputImagesCount;
-
-        //this tell how many channel is inputed from each input
-        // -1 (256) mean dynamic input (use the number of the output plug there)
-        unsigned char inputChanelCount[256];
 
         //this function is called to perform the operation
         eitri_opFunc func;
 
         eitri_OpParams params[32];
         unsigned int paramsCount;
+
+        //if this is -1, size is dynamic. If set, node only operate in that size*size
+        //ATM this is only used by the Color node, @TODO: maybe find a beter way?
+        int size;
 
         char name[256];
     } eitri_Operation;
@@ -132,4 +146,6 @@ extern "C"
 
     void eitri_op_output(eitri_Graph* graph, int opInst);
     void eitri_op_noise(eitri_Graph* graph,  int opInst);
+    void eitri_op_color(eitri_Graph* graph, int opInst);
+    void eitri_op_multiply(eitri_Graph* graph, int opInst);
 }

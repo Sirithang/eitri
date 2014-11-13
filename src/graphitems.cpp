@@ -77,7 +77,7 @@ void OperationConnector::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
             input->_connectedTo.push_back(output);
             output->_connectedTo.push_back(input);
 
-            eitri_connectOps(owner->owner->g, input->owner->op, output->owner->op, id);
+            eitri_connectOps(owner->owner->g, input->owner->op, output->owner->op, input->id);
 
             return;//exit the function we have handled things
         }

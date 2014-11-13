@@ -2,7 +2,7 @@
 #define PARAMINSPECTOR_H
 
 #include <QWidget>
-#include <QLayout>
+#include <QVBoxLayout>
 #include <QList>
 
 #include "graphitem.h"
@@ -19,10 +19,14 @@ signals:
 
 public slots:
 
-protected:
-    QLayout* layout;
+    void handleSpinBox(int i);
+    void handleTextBox(QString s);
+    void handleColorButton();
 
-    QList<QWidget*> _instanciated;
+protected:
+    QVBoxLayout* layout;
+
+    QList<QObject*> _instanciated;
 
     OperationBox* _opBox;
 };

@@ -127,12 +127,14 @@ extern "C"
     void eitri_createGraph(eitri_Graph* g);
 
     int eitri_addOperation(eitri_Graph* g, const char* name);
+    void eitri_deleteOperation(eitri_Graph* g, int op);
 
     //execute the operation, calling recursivly execute on input
     //and stocking result in its _cachedData
     void eitri_doOperation(eitri_Graph* g, int op);
 
     void eitri_connectOps(eitri_Graph* g, int inputOps, int outputOps, int idx);
+    void eitri_disconnectOps(eitri_Graph* g, int ops, int idx);
 
     int eitri_generateOutput(eitri_Graph* g, const char* outputName);
 

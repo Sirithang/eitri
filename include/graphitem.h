@@ -29,6 +29,7 @@ public:
     int type() const { return TypeConnector; }
 
     OperationConnector();
+    ~OperationConnector();
 
     QRectF boundingRect() const;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
@@ -39,6 +40,7 @@ public:
 
 
     void updateSpline();
+    void disconnect();
 };
 
 class OperationBox : public QGraphicsItem
@@ -57,6 +59,7 @@ public:
     QGraphicsTextItem headerText;
 
     OperationBox(GraphCanvas* pOwner, int pOp, bool pIsOutput);
+    virtual ~OperationBox();
 
     void updatePreview();
 

@@ -16,6 +16,11 @@ OperationConnector::OperationConnector()
     setFlags(0);
 }
 
+OperationConnector::~OperationConnector()
+{
+    disconnect();
+}
+
 QRectF OperationConnector::boundingRect() const
 {
     return QRectF(-CIRCLE_SIZE,-CIRCLE_SIZE,CIRCLE_SIZE*2,CIRCLE_SIZE*2);
@@ -69,9 +74,8 @@ void OperationConnector::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
             }
 
             if(input->_connectedTo.count() != 0)
-            {//input can only get one connection
-                //@TODO : remove input
-                input->_connectedTo.clear();
+            {//input can only get one connections
+                input->disconnect();
             }
 
             input->_connectedTo.push_back(output);
@@ -108,6 +112,44 @@ void OperationConnector::updateSpline()
 
         target->_splines[i]->setPath(p);
     }
+}
+
+void OperationConnector::disconnect()
+{
+    if(isInput)
+    {//if input, just disconnect in graph
+
+        if(owner->op != -1)//if op == -1, op was already deleted & disconnected in the Engine
+            eitri_disconnectOps(owner->owner->g, owner->op, id);
+
+        if(_connectedTo.count() == 1)
+        {
+            int idx = _connectedTo[0]->_connectedTo.indexOf(this);
+
+            qDebug()<<"id in corresponding output "<<idx;
+
+            _connectedTo[0]->_connectedTo.removeAt(idx);
+
+            scene()->removeItem(_connectedTo[0]->_splines[idx]);
+            delete  _connectedTo[0]->_splines[idx];
+             _connectedTo[0]->_splines.removeAt(idx);
+        }
+    }
+    else
+    {//if output, disconnect every input it's connected to.
+
+        qDebug() << "deleting output";
+        for(int i = 0; i < _connectedTo.count(); ++i)
+        {
+            _connectedTo[i]->disconnect();
+            scene()->removeItem(_splines[i]);
+            delete _splines[i];
+        }
+
+        _splines.clear();
+    }
+
+    _connectedTo.clear();
 }
 
 //-----------------------------------------
@@ -162,6 +204,27 @@ OperationBox::OperationBox(GraphCanvas *pOwner, int pOp, bool pIsOutput)
     headerText.setPlainText(eitri_gOpsDB.ops[opTemplate].name);
 
     updatePreview();
+}
+
+OperationBox::~OperationBox()
+{
+    qDebug() << "Deleting op box ";
+    eitri_deleteOperation(owner->g, op);
+    op = -1;
+
+    if(outConnector)
+    {
+        scene()->removeItem(outConnector);
+        delete outConnector;
+    }
+
+    for(int i = 0; i < inConnectors.count(); ++i)
+    {
+        scene()->removeItem(inConnectors[i]);
+        delete inConnectors[i];
+    }
+
+    inConnectors.clear();
 }
 
 void OperationBox::updatePreview()

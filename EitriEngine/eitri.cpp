@@ -230,6 +230,27 @@ int eitri_addOperation(eitri_Graph *g, const char *name)
     return idx;
 }
 
+
+void eitri_deleteOperation(eitri_Graph *g, int op)
+{
+    eitri_OpInstance* inst = &g->operations[op];
+
+    for(int i = 0; i < eitri_gOpsDB.ops[inst->operation].inputImagesCount; ++i)
+    {
+        eitri_disconnectOps(g, op, i);
+    }
+
+    inst->operation = -1;
+    if(inst->_cachedResult.data)
+        free(inst->_cachedResult.data);
+
+    inst->_cachedResult.w = 0;
+    inst->_cachedResult.h = 0;
+
+    g->freeops[g->freeopsListCount] = op;
+    g->freeopsListCount += 1;
+}
+
 //-----------------------------------------
 
 void eitri_doOperation(eitri_Graph *g, int op)
@@ -247,6 +268,11 @@ void eitri_connectOps(eitri_Graph *g, int inputOps, int outputOps, int idx)
     eitri_OpInstance* in = &g->operations[inputOps];
 
     in->inputs[idx] = outputOps;
+}
+
+void eitri_disconnectOps(eitri_Graph *g, int ops, int idx)
+{
+    g->operations[ops].inputs[idx] = -1;
 }
 
 //----- param management

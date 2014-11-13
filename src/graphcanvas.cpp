@@ -67,6 +67,14 @@ void GraphCanvas::keyPressEvent(QKeyEvent *e)
         d->move(QCursor::pos());
         d->show();
     }
+    else if(e->key() == Qt::Key_Delete)
+    {
+        if(_selected)
+        {
+            scene()->removeItem(_selected);
+            delete _selected;
+        }
+    }
     else
     {
         QWidget::keyPressEvent(e);
@@ -100,6 +108,7 @@ void GraphCanvas::updateInspector()
     QList<QGraphicsItem*> selectedItems = _scene.selectedItems();
     if(selectedItems.count() == 0)
     {
+        _selected = NULL;
         _paramInspector->setGraphItem(NULL);
         return;
     }
@@ -112,7 +121,9 @@ void GraphCanvas::updateInspector()
         selectedItems.pop_front();
     }
 
+    _selected = (OperationBox*)selectedItems.front();
+
     blockSignals(false);
 
-    _paramInspector->setGraphItem((OperationBox*)selectedItems.front());
+    _paramInspector->setGraphItem(_selected);
 }

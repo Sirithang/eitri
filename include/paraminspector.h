@@ -20,8 +20,11 @@ signals:
 public slots:
 
     void handleSpinBox(int i);
+    void handleSpinBoxf(double d);
     void handleTextBox(QString s);
     void handleColorButton();
+
+    void randValue();
 
 protected:
     QVBoxLayout* layout;

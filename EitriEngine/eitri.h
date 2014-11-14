@@ -29,6 +29,7 @@ extern "C"
     typedef enum
     {
         EITRI_PARAM_FLOAT,
+        EITRI_PARAM_INT,
         EITRI_PARAM_STRING,
         EITRI_PARAM_COLOR
     }eitri_ParamType;
@@ -36,6 +37,7 @@ extern "C"
     typedef union
     {
         float fParam;
+        int iParam;
         eitri_Color colParam;
         char sParam[2048];
     } eitri_OpParamValue;
@@ -150,4 +152,6 @@ extern "C"
     void eitri_op_noise(eitri_Graph* graph,  int opInst);
     void eitri_op_color(eitri_Graph* graph, int opInst);
     void eitri_op_multiply(eitri_Graph* graph, int opInst);
+
+    void eitri_op_brick(eitri_Graph* graph, int opInst);
 }

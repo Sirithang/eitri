@@ -3,6 +3,7 @@
 #include "eitri.h"
 
 #include <QSpinBox>
+#include <QDoubleSpinBox>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QVBoxLayout>
@@ -58,7 +59,7 @@ void ParamInspector::setGraphItem(OperationBox *b)
             {
             case EITRI_PARAM_FLOAT:
                 {
-                    QSpinBox* spinbox = new QSpinBox();
+                    QDoubleSpinBox* spinbox = new QDoubleSpinBox();
 
                     spinbox->setProperty("paramIdx", i);
                     spinbox->setValue(inst->paramsValues[i].fParam);
@@ -66,7 +67,32 @@ void ParamInspector::setGraphItem(OperationBox *b)
                     hlayout->addWidget(spinbox),
                     _instanciated.push_back(spinbox);
 
+                    connect(spinbox, SIGNAL(valueChanged(double)), this, SLOT(handleSpinBoxf(double)));
+                }
+                break;
+            case EITRI_PARAM_INT:
+                {
+                    QSpinBox* spinbox = new QSpinBox();
+
+                    spinbox->setProperty("paramIdx", i);
+                    spinbox->setMaximum(INT_MAX);
+
+                    spinbox->setValue(inst->paramsValues[i].iParam);
+
+                    hlayout->addWidget(spinbox),
+                    _instanciated.push_back(spinbox);
+
                     connect(spinbox, SIGNAL(valueChanged(int)), this, SLOT(handleSpinBox(int)));
+
+
+                    QPushButton* b = new QPushButton("rand");
+
+                    b->setProperty("linkedSpin", (int)(spinbox));
+
+                    hlayout->addWidget(b);
+                    _instanciated.push_back(b);
+
+                    connect(b, SIGNAL(clicked()), this, SLOT(randValue()));
                 }
                 break;
             case EITRI_PARAM_COLOR:
@@ -109,9 +135,43 @@ void ParamInspector::handleSpinBox(int i)
 
         if(v.isValid())
         {
-            _opBox->owner->g->operations[_opBox->op].paramsValues[v.toInt()].fParam = i;
+            _opBox->owner->g->operations[_opBox->op].paramsValues[v.toInt()].iParam = i;
 
             _opBox->updatePreview();
+        }
+    }
+}
+
+void ParamInspector::handleSpinBoxf(double d)
+{
+    QSpinBox* s = (QSpinBox*)QObject::sender();
+
+    if(s)
+    {
+        QVariant v = s->property("paramIdx");
+
+        if(v.isValid())
+        {
+            _opBox->owner->g->operations[_opBox->op].paramsValues[v.toInt()].fParam = d;
+
+            _opBox->updatePreview();
+        }
+    }
+}
+
+void ParamInspector::randValue()
+{
+    QSpinBox* s = (QSpinBox*)QObject::sender();
+
+    if(s)
+    {
+        QVariant v = s->property("linkedSpin");
+
+        if(v.isValid())
+        {
+            QSpinBox* b = (QSpinBox*)v.toInt();
+
+            b->setValue(qrand());
         }
     }
 }

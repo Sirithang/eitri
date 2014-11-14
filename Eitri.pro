@@ -11,11 +11,11 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = Eitri
 TEMPLATE = app
 
-INCLUDEPATH += $$PWD/include $$PWD/EitriEngine
+INCLUDEPATH += $$PWD/include $$PWD/EitriEngine $$PWD/EitriEngine/internal
 
 SOURCES += src/main.cpp\
         src/etrimain.cpp \
-    EitriEngine/eitri.cpp \
+    EitriEngine/internal/eitri.cpp \
     src/graphcanvas.cpp \
     src/opsdialog.cpp \
     src/graphitems.cpp \

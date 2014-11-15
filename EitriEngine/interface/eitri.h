@@ -69,8 +69,8 @@ extern "C"
 
     typedef struct
     {
-        unsigned char       outputCount;
-        int        outputs[256];
+        unsigned char   outputCount;
+        int             outputs[256];
 
         unsigned char       outputFreeCount;
         unsigned char       outputFree[256];
@@ -128,6 +128,9 @@ extern "C"
 
     void eitri_createGraph(eitri_Graph* g);
 
+    //fill dest with a serialized version (JSON) of the graph (to save/export)
+    void eitri_serializeGraph(eitri_Graph* g, char* dest, int maxSize);
+
     int eitri_addOperation(eitri_Graph* g, const char* name);
     void eitri_deleteOperation(eitri_Graph* g, int op);
 
@@ -140,18 +143,7 @@ extern "C"
 
     int eitri_generateOutput(eitri_Graph* g, const char* outputName);
 
-    // --- param management
-
     //op here is the op template, not the op instance. This is rarely called by user
     //only in eitri_registerOperations to define all info
     void eitri_addParam(int op, const char* name, eitri_ParamType type);
-
-    //============== operation impl. =============================
-
-    void eitri_op_output(eitri_Graph* graph, int opInst);
-    void eitri_op_noise(eitri_Graph* graph,  int opInst);
-    void eitri_op_color(eitri_Graph* graph, int opInst);
-    void eitri_op_multiply(eitri_Graph* graph, int opInst);
-
-    void eitri_op_brick(eitri_Graph* graph, int opInst);
 }

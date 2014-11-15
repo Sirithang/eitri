@@ -11,6 +11,9 @@ EtriMain::EtriMain(QWidget *parent) :
 
     ui->graphCanvas->_previewLabel = ui->previewLabel;
     ui->graphCanvas->_paramInspector = ui->paramInsp;
+
+
+    connect(ui->actionExport, SIGNAL(triggered()), ui->graphCanvas, SLOT(saveGraph()));
 }
 
 EtriMain::~EtriMain()

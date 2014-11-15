@@ -11,11 +11,10 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = Eitri
 TEMPLATE = app
 
-INCLUDEPATH += $$PWD/include $$PWD/EitriEngine $$PWD/EitriEngine/internal
+INCLUDEPATH += $$PWD/include
 
 SOURCES += src/main.cpp\
         src/etrimain.cpp \
-    EitriEngine/internal/eitri.cpp \
     src/graphcanvas.cpp \
     src/opsdialog.cpp \
     src/graphitems.cpp \
@@ -23,7 +22,6 @@ SOURCES += src/main.cpp\
     src/paraminspector.cpp
 
 HEADERS  += include/etrimain.h \
-    EitriEngine/eitri.h \
     include/graphcanvas.h \
     include/opsdialog.h \
     include/graphitem.h \
@@ -31,3 +29,14 @@ HEADERS  += include/etrimain.h \
     include/paraminspector.h
 
 FORMS    += etrimain.ui
+
+# -- Adding Eitri lib
+
+ win32:CONFIG(release, debug|release): LIBS += -L$$PWD/EitriEngine/lib/release/ -lEitriEngine
+ else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/EitriEngine/lib/debug/ -lEitriEngine
+
+ INCLUDEPATH += $$PWD/EitriEngine/interface
+ DEPENDPATH += $$PWD/EitriEngine/lib
+
+ win32:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/EitriEngine/lib/release/EitriEngine.lib
+ else:win32:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/EitriEngine/lib/debug/EitriEngine.lib

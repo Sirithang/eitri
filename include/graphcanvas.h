@@ -41,6 +41,8 @@ signals:
 
 public slots:
     void updateInspector();
+
+    void saveGraph();
 };
 
 #endif // GRAPHCANVAS_H

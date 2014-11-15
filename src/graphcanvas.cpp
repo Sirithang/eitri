@@ -3,7 +3,7 @@
 
 #include <QKeyEvent>
 #include <QDebug>
-
+#include <QFileDialog>
 
 //##################################################
 
@@ -126,4 +126,26 @@ void GraphCanvas::updateInspector()
     blockSignals(false);
 
     _paramInspector->setGraphItem(_selected);
+}
+
+void GraphCanvas::saveGraph()
+{
+    QString filename = QFileDialog::getSaveFileName(this, "Save...", "", "*.etrprj");
+
+    if(!filename.isEmpty())
+    {
+    #define MAX_BUFFER_SIZE 0x10000
+        char buffer[MAX_BUFFER_SIZE];
+
+        eitri_serializeGraph(g, buffer, MAX_BUFFER_SIZE);
+
+        QFile f(filename);
+
+        if(!f.open( QIODevice::WriteOnly|QIODevice::Text))
+            return;
+
+        f.write(buffer);
+
+        f.close();
+    }
 }

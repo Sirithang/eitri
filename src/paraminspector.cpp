@@ -53,6 +53,7 @@ void ParamInspector::setGraphItem(OperationBox *b)
             QLabel* l = new QLabel();
 
             l->setText(op->params[i].name);
+            l->setToolTip(op->params[i].tip);
             hlayout->addWidget(l);
 
             switch(op->params[i].type)

@@ -16,12 +16,14 @@ INCLUDEPATH += internal interface
 SOURCES += \
     internal/eitri.cpp \
     internal/eitriNodes.cpp \
-    internal/eitriSerialization.cpp
+    internal/eitriSerialization.cpp \
+    internal/jsmn.cpp
 
 HEADERS += \
     interface/eitri.h \
     internal/stb_perlin.h \
-    internal/eitriInternal.h
+    internal/eitriInternal.h \
+    internal/jsmn.h
 unix {
     target.path = /usr/lib
     INSTALLS += target

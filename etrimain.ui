@@ -33,7 +33,16 @@
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="actionExport"/>
+    <widget class="QMenu" name="menuGraph">
+     <property name="title">
+      <string>Graph...</string>
+     </property>
+     <addaction name="actionImport"/>
+     <addaction name="actionExport"/>
+    </widget>
+    <addaction name="actionOpen"/>
+    <addaction name="actionSave"/>
+    <addaction name="menuGraph"/>
    </widget>
    <addaction name="menuFile"/>
   </widget>
@@ -126,6 +135,24 @@
   <action name="actionExport">
    <property name="text">
     <string>Export</string>
+   </property>
+  </action>
+  <action name="actionImport">
+   <property name="text">
+    <string>Import</string>
+   </property>
+  </action>
+  <action name="actionOpen">
+   <property name="text">
+    <string>Open</string>
+   </property>
+  </action>
+  <action name="actionSave">
+   <property name="text">
+    <string>Save</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
    </property>
   </action>
  </widget>

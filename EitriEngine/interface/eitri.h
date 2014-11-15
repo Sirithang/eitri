@@ -45,7 +45,8 @@ extern "C"
     typedef struct
     {
         eitri_ParamType type;
-        char name[1024];
+        char name[256];
+        char tip[1024];
     } eitri_OpParams;
 
     //return the default value for given type ( for float, (0,0,0,1) for color )
@@ -130,6 +131,7 @@ extern "C"
 
     //fill dest with a serialized version (JSON) of the graph (to save/export)
     void eitri_serializeGraph(eitri_Graph* g, char* dest, int maxSize);
+    void eitri_deserializeGraph(eitri_Graph* g, const char* data);
 
     int eitri_addOperation(eitri_Graph* g, const char* name);
     void eitri_deleteOperation(eitri_Graph* g, int op);
@@ -145,5 +147,5 @@ extern "C"
 
     //op here is the op template, not the op instance. This is rarely called by user
     //only in eitri_registerOperations to define all info
-    void eitri_addParam(int op, const char* name, eitri_ParamType type);
+    void eitri_addParam(int op, const char* name, const char *tip, eitri_ParamType type);
 }

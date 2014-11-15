@@ -5,8 +5,9 @@
 
 //===========================================================
 
-char* eitri_saveNode(eitri_OpInstance* inst, char* out);
+void eitri_initOp(eitri_Graph *g, int idx, int opIdx);
 
+char* eitri_saveNode(eitri_OpInstance* inst, char* out);
 
 
 //============== operation impl. =============================

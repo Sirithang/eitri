@@ -204,7 +204,7 @@ void eitri_op_perlin(eitri_Graph* graph, int opInst)
     float zMul = inst->paramsValues[2].fParam;
 
     FOR_PIXELS_IN_IMAGE(inst->_cachedResult)
-        float f = stb_perlin_noise3(u * xMul, v * yMul, 1.0f * zMul);
+        float f = stb_perlin_noise3(u * xMul, v * yMul, 1.0f * zMul, xMul, yMul, 0);
 
         eitri_Color* dest = (eitri_Color*)eitri_samplePictureData(&inst->_cachedResult, u, v);
 

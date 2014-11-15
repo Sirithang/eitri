@@ -3,6 +3,7 @@
 
 #include <QKeyEvent>
 #include <QDebug>
+#include <QAction>
 #include <QFileDialog>
 
 //##################################################
@@ -44,15 +45,31 @@ void GraphCanvas::createOps(QPoint p, QString op)
 {
     int id = eitri_addOperation(g, op.toLocal8Bit());
 
-    if(id != -1)
+    addOps(p, id);
+}
+
+void GraphCanvas::addOps(QPoint p, int op)
+{
+    if(op != -1)
     {
-        OperationBox* b = new OperationBox(this, id, false);
+        OperationBox* b = new OperationBox(this, op, false);
 
         b->setPos(mapToScene(mapFromGlobal(p)));
         b->setFlags(QGraphicsItem::ItemIsMovable | QGraphicsItem::ItemIsSelectable);
 
+        outputsBox.append(b);
         _scene.addItem(b);
     }
+}
+
+void GraphCanvas::clearAllNodes()
+{
+    for(int i = 0; i < outputsBox.count(); ++i)
+    {
+        delete outputsBox[i];
+    }
+
+    outputsBox.clear();
 }
 
 //===========================================
@@ -101,6 +118,31 @@ void GraphCanvas::wheelEvent(QWheelEvent* event) {
   // as wheel is normally used for moving scrollbars
 }
 
+void GraphCanvas::recreateGraph()
+{
+    scene()->clear();
+    clearAllNodes();
+
+    for(int i = 0; i < g->operationsCount; ++i)
+    {
+        //@TODO : better reconstruction than random?
+       addOps(QPoint((qrand()%400) - 200, (qrand()%400) - 200), i);
+    }
+
+    for(int i = 0; i < outputsBox.count(); ++i)
+    {
+        for(int j = 0; j < 16; ++j)
+        {
+            if(g->operations[i].inputs[j] != -1)
+            {
+                int out = g->operations[i].inputs[j];
+
+                outputsBox[out]->outConnector->connectTo(outputsBox[i]->inConnectors[j]);
+            }
+        }
+    }
+}
+
 //=============================================
 
 void GraphCanvas::updateInspector()
@@ -128,9 +170,18 @@ void GraphCanvas::updateInspector()
     _paramInspector->setGraphItem(_selected);
 }
 
+void GraphCanvas::exportNode()
+{
+    QAction* a = (QAction*)QObject::sender();
+
+    OperationBox* b = (OperationBox*)a->property("opbox").toInt();
+
+    b->exportResult();
+}
+
 void GraphCanvas::saveGraph()
 {
-    QString filename = QFileDialog::getSaveFileName(this, "Save...", "", "*.etrprj");
+    QString filename = QFileDialog::getSaveFileName(this, "Export...", "", "*.eit");
 
     if(!filename.isEmpty())
     {
@@ -145,6 +196,100 @@ void GraphCanvas::saveGraph()
             return;
 
         f.write(buffer);
+
+        f.close();
+    }
+}
+
+void GraphCanvas::importGraph()
+{
+    QString filename = QFileDialog::getOpenFileName(this, "Import...", "", "*.eit");
+
+    if(!filename.isEmpty())
+    {
+        QFile f(filename);
+
+        qDebug()<<filename;
+
+        if(!f.open(QIODevice::ReadOnly|QIODevice::Text))
+            return;
+
+        QByteArray content = f.readAll();
+        eitri_deserializeGraph(g, content.constData());
+
+        recreateGraph();
+    }
+}
+
+void GraphCanvas::saveProject()
+{
+    QString filename = QFileDialog::getSaveFileName(this, "Export...", "", "*.eitprj");
+
+    if(!filename.isEmpty())
+    {
+
+        QFile f(filename);
+
+        if(!f.open(QIODevice::WriteOnly))
+            return;
+
+    #define MAX_BUFFER_SIZE 0x10000
+        char buffer[MAX_BUFFER_SIZE];
+
+        eitri_serializeGraph(g, buffer, MAX_BUFFER_SIZE);
+
+        QByteArray b(buffer);
+
+        QDataStream out(&f);
+        out.setVersion(QDataStream::Qt_5_0);
+
+        out << b;
+
+        for(int i = 0; i < outputsBox.count(); ++i)
+        {
+            out << outputsBox[i]->pos();
+        }
+
+        f.close();
+    }
+}
+
+void GraphCanvas::openProject()
+{
+    QString filename = QFileDialog::getOpenFileName(this, "Import...", "", "*.eitprj");
+
+    if(!filename.isEmpty())
+    {
+        QFile f(filename);
+
+        qDebug()<<filename;
+
+        if(!f.open(QIODevice::ReadOnly))
+            return;
+
+        QDataStream in(&f);
+        in.setVersion(QDataStream::Qt_5_0);
+
+        QByteArray b;
+
+        in >> b;
+
+        eitri_deserializeGraph(g, b.constData());
+
+        recreateGraph();
+
+        for(int i = 0; i < outputsBox.count(); ++i)
+        {
+            QPointF p;
+            in >> p;
+            outputsBox[i]->setPos(p);
+        }
+
+        for(int i = 0; i < outputsBox.count(); ++i)
+        {
+            if(outputsBox[i]->outConnector)
+                outputsBox[i]->outConnector->updateSpline();
+        }
 
         f.close();
     }

@@ -4,6 +4,8 @@
 #include <QPointF>
 #include <QGraphicsSceneMouseEvent>
 #include <QGraphicsWidget>
+#include <QFileDialog>
+#include <QMenu>
 #include <QDebug>
 
 #define HEADER_H 20
@@ -64,22 +66,15 @@ void OperationConnector::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
         if(isInput != c->isInput)
         {//we can't pair input w/ input or output w/ output
 
+            //remove the spline. connectTo() handle plugin it where it should be
+            scene()->removeItem(_splines.last());
+            delete _splines.last();
+            _splines.removeLast();
+
             OperationConnector* input = isInput ? this : c;
             OperationConnector* output = isInput ? c : this;
 
-            if(isInput)
-            {//this is an input, it shouldn't get ownership of the path, output need
-                c->_splines.push_back(_splines.back());
-                _splines.removeLast();
-            }
-
-            if(input->_connectedTo.count() != 0)
-            {//input can only get one connections
-                input->disconnect();
-            }
-
-            input->_connectedTo.push_back(output);
-            output->_connectedTo.push_back(input);
+            connectTo(c);
 
             eitri_connectOps(owner->owner->g, input->owner->op, output->owner->op, input->id);
 
@@ -97,9 +92,12 @@ void OperationConnector::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
 void OperationConnector::updateSpline()
 {
     OperationConnector* target = this;
-    if(isInput && _connectedTo.count() != 0)
+    if(isInput)
     {
-        target = _connectedTo[0];
+        if(_connectedTo.count() != 0)
+            target = _connectedTo[0];
+        else
+            return; //input & no connection nothing to update
     }
 
     Q_ASSERT(target->_splines.count() == target->_connectedTo.count());
@@ -112,6 +110,25 @@ void OperationConnector::updateSpline()
 
         target->_splines[i]->setPath(p);
     }
+}
+
+void OperationConnector::connectTo(OperationConnector *other)
+{
+    OperationConnector* input = isInput ? this : other;
+    OperationConnector* output = isInput ? other : this;
+
+    output->_splines.append(new QGraphicsPathItem());
+    scene()->addItem(output->_splines.last());
+
+    if(input->_connectedTo.count() != 0)
+    {//input can only get one connections
+        input->disconnect();
+    }
+
+    input->_connectedTo.push_back(output);
+    output->_connectedTo.push_back(input);
+
+    output->updateSpline();
 }
 
 void OperationConnector::disconnect()
@@ -165,6 +182,7 @@ OperationBox::OperationBox(GraphCanvas *pOwner, int pOp, bool pIsOutput)
     setFlags(QGraphicsItem::ItemIsMovable | QGraphicsItem::ItemIsSelectable);
 
     headerText.setParentItem(this);
+
 
     int opTemplate = owner->g->operations[op].operation;
     int inpCount = eitri_gOpsDB.ops[opTemplate].inputImagesCount;
@@ -241,6 +259,20 @@ void OperationBox::updatePreview()
 
         owner->_previewLabel->setPixmap(preview);
     }
+
+    update();
+}
+
+void OperationBox::exportResult()
+{
+    QString filename = QFileDialog::getSaveFileName(NULL, "Export...", QString(), "*.png");
+
+    if(filename.isEmpty())
+        return;
+
+    updatePreview();
+
+    preview.save(filename, "PNG");
 }
 
 QRectF OperationBox::boundingRect() const
@@ -290,4 +322,16 @@ void OperationBox::mouseMoveEvent(QGraphicsSceneMouseEvent * event)
 void OperationBox::mousePressEvent(QGraphicsSceneMouseEvent *event)
 {
     updatePreview();
+}
+
+void OperationBox::contextMenuEvent(QGraphicsSceneContextMenuEvent *event)
+{
+        QMenu menu;
+      QAction *exportAction = menu.addAction("Export...");
+
+      exportAction->setProperty("opbox", QVariant((int)this));
+
+      QObject::connect(exportAction, SIGNAL(triggered()), owner, SLOT(exportNode()));
+
+      menu.exec(event->screenPos());
 }

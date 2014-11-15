@@ -51,7 +51,7 @@ void eitri_registerOperations()
         eitri_gOpsDB.ops[idx].func = eitri_op_color;
         eitri_gOpsDB.ops[idx].size = 1;
 
-        eitri_addParam(idx, "color", EITRI_PARAM_COLOR);
+        eitri_addParam(idx, "color", "", EITRI_PARAM_COLOR);
 
         eitri_gOpsDB.opsCount += 1;
     }
@@ -77,7 +77,7 @@ void eitri_registerOperations()
         eitri_gOpsDB.ops[idx].func = eitri_op_brick;
         eitri_gOpsDB.ops[idx].size = -1;
 
-        eitri_addParam(idx, "seed", EITRI_PARAM_INT);
+        eitri_addParam(idx, "seed", "random number seed", EITRI_PARAM_INT);
 
         eitri_gOpsDB.opsCount += 1;
     }
@@ -91,9 +91,11 @@ void eitri_registerOperations()
         eitri_gOpsDB.ops[idx].func = eitri_op_perlin;
         eitri_gOpsDB.ops[idx].size = -1;
 
-        eitri_addParam(idx, "xMul", EITRI_PARAM_FLOAT);
-        eitri_addParam(idx, "yMul", EITRI_PARAM_FLOAT);
-        eitri_addParam(idx, "zMul", EITRI_PARAM_FLOAT);
+        eitri_addParam(idx, "xMul", "x multiplier for perlin noise", EITRI_PARAM_FLOAT);
+        eitri_addParam(idx, "yMul", "y multiplier for perlin noise", EITRI_PARAM_FLOAT);
+        eitri_addParam(idx, "zMul", "z multiplier for perlin noise", EITRI_PARAM_FLOAT);
+
+        eitri_addParam(idx, "wrap", "if 1 and x&y multiplier is power of 2, the noise wrap", EITRI_PARAM_INT);
 
         eitri_gOpsDB.opsCount += 1;
     }
@@ -192,6 +194,31 @@ void eitri_getOutput(eitri_Graph *g, const char *outputName)
 
 //------------------------------------------------
 
+void eitri_initOp(eitri_Graph* g, int idx, int opIdx)
+{
+    eitri_OpInstance* inst = &g->operations[idx];
+    inst->operation = opIdx;
+
+    inst->isOutput = 0;
+
+    for(int i = 0; i < eitri_gOpsDB.ops[opIdx].paramsCount; ++i)
+    {
+        inst->paramsValues[i] = eitri_getDefaultParamValue(eitri_gOpsDB.ops[opIdx].params[i].type);
+    }
+
+    //init all input to -1 (no input connected)
+    memset(inst->inputs, -1, 16 * sizeof(int));
+
+    inst->_cachedResult.w = eitri_gOpsDB.ops[opIdx].size == -1 ? 256 : eitri_gOpsDB.ops[opIdx].size;
+    inst->_cachedResult.h = eitri_gOpsDB.ops[opIdx].size == -1 ? 256 : eitri_gOpsDB.ops[opIdx].size;
+    inst->_cachedResult.nbChannel = 4;
+    inst->_cachedResult.channelSize = sizeof(char);
+
+    inst->_cachedResult.data = 0;
+}
+
+//------------------------------------------------
+
 int eitri_addOperation(eitri_Graph *g, const char *name)
 {
     int opIdx = -1;
@@ -221,25 +248,7 @@ int eitri_addOperation(eitri_Graph *g, const char *name)
         g->operationsCount += 1;
     }
 
-    eitri_OpInstance* inst = &g->operations[idx];
-    inst->operation = opIdx;
-
-    inst->isOutput = 0;
-
-    for(int i = 0; i < eitri_gOpsDB.ops[opIdx].paramsCount; ++i)
-    {
-        inst->paramsValues[i] = eitri_getDefaultParamValue(eitri_gOpsDB.ops[opIdx].params[i].type);
-    }
-
-    //init all input to -1 (no input connected)
-    memset(inst->inputs, -1, 16 * sizeof(int));
-
-    inst->_cachedResult.w = eitri_gOpsDB.ops[opIdx].size == -1 ? 256 : eitri_gOpsDB.ops[opIdx].size;
-    inst->_cachedResult.h = eitri_gOpsDB.ops[opIdx].size == -1 ? 256 : eitri_gOpsDB.ops[opIdx].size;
-    inst->_cachedResult.nbChannel = 4;
-    inst->_cachedResult.channelSize = sizeof(char);
-
-    inst->_cachedResult.data = 0;
+    eitri_initOp(g,idx,opIdx);
 
     if(strncmp(name, "output", 256) == 0)
     {//special case, output are cached for faster search
@@ -257,7 +266,7 @@ int eitri_addOperation(eitri_Graph *g, const char *name)
         }
 
         g->outputs[outIdx] = idx;
-        inst->isOutput = 1;
+        g->operations[idx].isOutput = 1;
     }
 
     return idx;
@@ -310,10 +319,11 @@ void eitri_disconnectOps(eitri_Graph *g, int ops, int idx)
 
 //----- param management
 
-void eitri_addParam(int op, const char *name, eitri_ParamType type)
+void eitri_addParam(int op, const char *name, const char *tip, eitri_ParamType type)
 {
     int c = eitri_gOpsDB.ops[op].paramsCount;
     strncpy(eitri_gOpsDB.ops[op].params[c].name, name, 256);
+    strncpy(eitri_gOpsDB.ops[op].params[c].tip, tip, 256);
     eitri_gOpsDB.ops[op].params[c].type = type;
 
     eitri_gOpsDB.ops[op].paramsCount += 1;

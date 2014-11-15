@@ -14,6 +14,10 @@ EtriMain::EtriMain(QWidget *parent) :
 
 
     connect(ui->actionExport, SIGNAL(triggered()), ui->graphCanvas, SLOT(saveGraph()));
+    connect(ui->actionImport, SIGNAL(triggered()), ui->graphCanvas, SLOT(importGraph()));
+
+    connect(ui->actionSave, SIGNAL(triggered()), ui->graphCanvas, SLOT(saveProject()));
+    connect(ui->actionOpen, SIGNAL(triggered()), ui->graphCanvas, SLOT(openProject()));
 }
 
 EtriMain::~EtriMain()

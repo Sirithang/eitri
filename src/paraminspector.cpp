@@ -9,6 +9,8 @@
 #include <QVBoxLayout>
 #include <QPushButton>
 #include <QColorDialog>
+#include <QFrame>
+#include <QLineEdit>
 
 
 //---helper func
@@ -44,13 +46,89 @@ void ParamInspector::setGraphItem(NodeBox *b)
 
     if(b)
     {
-        eitri_NodeInstance* inst = &b->owner->g->operations[b->op];
-        eitri_Node* op = &eitri_gOpsDB.ops[b->owner->g->operations[b->op].operation];
+        eitri_NodeInstance* inst = &b->owner->g->nodes[b->op];
+        eitri_Node* op = &eitri_gOpsDB.ops[b->owner->g->nodes[b->op].operation];
+
+         QHBoxLayout* hlayout;
+         QLabel* l;
+
+        if(op->size == -1)
+        {
+            hlayout = new QHBoxLayout();
+            l = new QLabel();
+
+            l->setText("Size : ");
+            l->setToolTip("Size of the image. W == H at the moment");
+
+            hlayout->addWidget(l);
+
+            QSpinBox* sizeSpin = new QSpinBox();
+            sizeSpin->setMinimum(1);
+            sizeSpin->setMaximum(8192);
+            sizeSpin->setKeyboardTracking(false);
+
+            sizeSpin->setValue(inst->_cachedResult.w);
+
+            hlayout->addWidget(sizeSpin);
+
+            connect(sizeSpin, SIGNAL(valueChanged(int)), this, SLOT(handleImgResize(int)));
+
+            QFrame* line = new QFrame();
+            line->setObjectName(QString::fromUtf8("line"));
+            line->setGeometry(QRect(320, 150, 118, 3));
+            line->setFrameShape(QFrame::HLine);
+            line->setFrameShadow(QFrame::Sunken);
+
+            layout->addLayout(hlayout);
+
+            layout->addWidget(line);
+
+            _instanciated.append(sizeSpin);
+            _instanciated.append(hlayout);
+            _instanciated.append(l);
+            _instanciated.append(line);
+        }
+
+        if(inst->isOutput)
+        {
+            eitri_GraphOutput* output =  &b->owner->g->outputs[inst->isOutput-1];
+
+            hlayout = new QHBoxLayout();
+            l = new QLabel();
+
+            l->setText("Output Name : ");
+            l->setToolTip("output name for query from C lib");
+
+             hlayout->addWidget(l);
+
+             QLineEdit* lineInput = new QLineEdit();
+             lineInput->setMaxLength(255);
+             lineInput->setText(output->name);
+
+             hlayout->addWidget(lineInput);
+
+             connect(lineInput, SIGNAL(editingFinished()), this, SLOT(handleRenaming()));
+
+             QFrame* line = new QFrame();
+             line->setObjectName(QString::fromUtf8("line"));
+             line->setGeometry(QRect(320, 150, 118, 3));
+             line->setFrameShape(QFrame::HLine);
+             line->setFrameShadow(QFrame::Sunken);
+
+             layout->addLayout(hlayout);
+
+             layout->addWidget(line);
+
+             _instanciated.append(hlayout);
+             _instanciated.append(lineInput);
+             _instanciated.append(l);
+             _instanciated.append(line);
+        }
 
         for(int i = 0; i < op->paramsCount; ++i)
         {
-            QHBoxLayout* hlayout = new QHBoxLayout();
-            QLabel* l = new QLabel();
+            hlayout = new QHBoxLayout();
+            l = new QLabel();
 
             l->setText(op->params[i].name);
             l->setToolTip(op->params[i].tip);
@@ -63,6 +141,8 @@ void ParamInspector::setGraphItem(NodeBox *b)
                     QDoubleSpinBox* spinbox = new QDoubleSpinBox();
 
                     spinbox->setProperty("paramIdx", i);
+                    spinbox->setMaximum(FLT_MAX);
+                    spinbox->setKeyboardTracking(false);
                     spinbox->setValue(inst->paramsValues[i].fParam);
 
                     hlayout->addWidget(spinbox),
@@ -77,6 +157,7 @@ void ParamInspector::setGraphItem(NodeBox *b)
 
                     spinbox->setProperty("paramIdx", i);
                     spinbox->setMaximum(INT_MAX);
+                    spinbox->setKeyboardTracking(false);
 
                     spinbox->setValue(inst->paramsValues[i].iParam);
 
@@ -136,7 +217,8 @@ void ParamInspector::handleSpinBox(int i)
 
         if(v.isValid())
         {
-            _opBox->owner->g->operations[_opBox->op].paramsValues[v.toInt()].iParam = i;
+            _opBox->owner->g->nodes[_opBox->op].paramsValues[v.toInt()].iParam = i;
+            _opBox->owner->g->nodes[_opBox->op].isDirty = 1;
 
             _opBox->updatePreview();
         }
@@ -153,7 +235,8 @@ void ParamInspector::handleSpinBoxf(double d)
 
         if(v.isValid())
         {
-            _opBox->owner->g->operations[_opBox->op].paramsValues[v.toInt()].fParam = d;
+            _opBox->owner->g->nodes[_opBox->op].paramsValues[v.toInt()].fParam = d;
+            _opBox->owner->g->nodes[_opBox->op].isDirty = 1;
 
             _opBox->updatePreview();
         }
@@ -195,12 +278,32 @@ void ParamInspector::handleColorButton()
             QColor color = QColorDialog::getColor();
             setButtonToColor(button, color);
 
-            eitri_Color* c = &_opBox->owner->g->operations[_opBox->op].paramsValues[v.toInt()].colParam;
+            eitri_Color* c = &_opBox->owner->g->nodes[_opBox->op].paramsValues[v.toInt()].colParam;
 
             c->r = color.red();
             c->g = color.green();
             c->b = color.blue();
             c->a = color.alpha();
+
+            _opBox->owner->g->nodes[_opBox->op].isDirty = 1;
         }
     }
+}
+
+void ParamInspector::handleImgResize(int i)
+{
+    eitri_resizeNode(_opBox->owner->g, _opBox->op, i);
+    _opBox->owner->g->nodes[_opBox->op].isDirty = 1;
+    _opBox->updatePreview();
+}
+
+void ParamInspector::handleRenaming()
+{
+    QLineEdit* line = (QLineEdit*)QObject::sender();
+
+    eitri_NodeInstance* inst = &_opBox->owner->g->nodes[_opBox->op];
+
+    strncpy(_opBox->owner->g->outputs[inst->isOutput-1].name, (const char*)line->text().toLocal8Bit().constData(), line->text().length()+1);
+
+    _opBox->updatePreview();
 }

@@ -99,15 +99,39 @@ void eitri_registerOperations()
 
         eitri_gOpsDB.opsCount += 1;
     }
+
+    //operation blend throught mask
+    {
+        int idx = eitri_gOpsDB.opsCount;
+
+        strncpy(eitri_gOpsDB.ops[idx].name, "image blend", 256);
+        eitri_gOpsDB.ops[idx].inputImagesCount = 3;
+        eitri_gOpsDB.ops[idx].func = eitri_op_maskblend;
+        eitri_gOpsDB.ops[idx].size = -1;
+
+        eitri_gOpsDB.opsCount += 1;
+    }
+
+    //operation normalmapping
+    {
+        int idx = eitri_gOpsDB.opsCount;
+
+        strncpy(eitri_gOpsDB.ops[idx].name, "normalmapping", 256);
+        eitri_gOpsDB.ops[idx].inputImagesCount = 1;
+        eitri_gOpsDB.ops[idx].func = eitri_op_normalmap;
+        eitri_gOpsDB.ops[idx].size = -1;
+
+        eitri_gOpsDB.opsCount += 1;
+    }
 }
 
 
 void eitri_createGraph(eitri_Graph *g)
 {
     g->outputCount = 0;
-    g->freeopsListCount = 0;
+    g->freeNodeListCount = 0;
     g->outputFreeCount = 0;
-    g->operationsCount = 0;
+    g->nodeCount = 0;
 
     g->seed = rand();
 }
@@ -132,9 +156,15 @@ void eitri_allocatePictureData(eitri_PicturData* d)
 
 char* eitri_samplePictureData(eitri_PicturData *d, float u, float v)
 {
+
     //default is wrapping, maybe offer choice?
     float cu = u - floor(u);
     float cv = v - floor(v);
+
+    if(cu < 0)
+        cu += 1.0f;
+    if(cv < 0)
+        cv += 1.0f;
 
     int x = cu * d->w;
     int y = cv * d->h;
@@ -196,7 +226,7 @@ void eitri_getOutput(eitri_Graph *g, const char *outputName)
 
 void eitri_initOp(eitri_Graph* g, int idx, int opIdx)
 {
-    eitri_NodeInstance* inst = &g->operations[idx];
+    eitri_NodeInstance* inst = &g->nodes[idx];
     inst->operation = opIdx;
 
     inst->isOutput = 0;
@@ -219,7 +249,7 @@ void eitri_initOp(eitri_Graph* g, int idx, int opIdx)
 
 //------------------------------------------------
 
-int eitri_addOperation(eitri_Graph *g, const char *name)
+int eitri_addNode(eitri_Graph *g, const char *name)
 {
     int opIdx = -1;
 
@@ -237,15 +267,15 @@ int eitri_addOperation(eitri_Graph *g, const char *name)
 
     int idx;
 
-    if(g->freeopsListCount > 0)
+    if(g->freeNodeListCount > 0)
     {
-        g->freeopsListCount -= 1;
-        idx = g->freeops[g->freeopsListCount];
+        g->freeNodeListCount -= 1;
+        idx = g->freeNodes[g->freeNodeListCount];
     }
     else
     {
-        idx = g->operationsCount;
-        g->operationsCount += 1;
+        idx = g->nodeCount;
+        g->nodeCount += 1;
     }
 
     eitri_initOp(g,idx,opIdx);
@@ -265,21 +295,29 @@ int eitri_addOperation(eitri_Graph *g, const char *name)
             g->outputCount += 1;
         }
 
-        g->outputs[outIdx] = idx;
-        g->operations[idx].isOutput = 1;
+        g->outputs[outIdx].node = idx;
+        strncpy(g->outputs[outIdx].name, "NewOuput", 255);
+        g->nodes[idx].isOutput = outIdx + 1;
     }
 
     return idx;
 }
 
 
-void eitri_deleteOperation(eitri_Graph *g, int op)
+void eitri_deleteNode(eitri_Graph *g, int op)
 {
-    eitri_NodeInstance* inst = &g->operations[op];
+    eitri_NodeInstance* inst = &g->nodes[op];
 
     for(int i = 0; i < eitri_gOpsDB.ops[inst->operation].inputImagesCount; ++i)
     {
-        eitri_disconnectOps(g, op, i);
+        eitri_disconnectNode(g, op, i);
+    }
+
+    if(inst->isOutput)
+    {
+        g->outputs[inst->isOutput-1].node = -1;
+        g->outputFree[g->outputFreeCount] = inst->isOutput-1;
+        g->outputFreeCount += 1;
     }
 
     inst->operation = -1;
@@ -289,32 +327,68 @@ void eitri_deleteOperation(eitri_Graph *g, int op)
     inst->_cachedResult.w = 0;
     inst->_cachedResult.h = 0;
 
-    g->freeops[g->freeopsListCount] = op;
-    g->freeopsListCount += 1;
+    g->freeNodes[g->freeNodeListCount] = op;
+    g->freeNodeListCount += 1;
 }
 
 //-----------------------------------------
 
-void eitri_doOperation(eitri_Graph *g, int op)
+void eitri_doNode(eitri_Graph *g, int op)
 {
-    if(g->operations[op].operation != -1)
+    if(g->nodes[op].operation != -1)
     {
-        eitri_gOpsDB.ops[g->operations[op].operation].func(g, op);
+//        if(g->nodes[op]._cachedResult.data && !g->nodes[op].isDirty)
+//            return;//we already have data and it's not dirty, don't do the op
+
+        eitri_gOpsDB.ops[g->nodes[op].operation].func(g, op);
+        g->nodes[op].isDirty = 0;
     }
 }
 
 //------------------------------------------
 
-void eitri_connectOps(eitri_Graph *g, int inputOps, int outputOps, int idx)
+void eitri_resizeNode(eitri_Graph *g, int node, int newSize)
 {
-    eitri_NodeInstance* in = &g->operations[inputOps];
+    eitri_NodeInstance* inst = &g->nodes[node];
+
+    if(inst->_cachedResult.data)
+        free(inst->_cachedResult.data);
+
+    inst->_cachedResult.data = NULL;
+
+    inst->_cachedResult.w = newSize;
+    inst->_cachedResult.h = newSize;
+}
+
+//------------------------------------------
+
+void eitri_connectNode(eitri_Graph *g, int inputOps, int outputOps, int idx)
+{
+    eitri_NodeInstance* in = &g->nodes[inputOps];
 
     in->inputs[idx] = outputOps;
 }
 
-void eitri_disconnectOps(eitri_Graph *g, int ops, int idx)
+void eitri_disconnectNode(eitri_Graph *g, int ops, int idx)
 {
-    g->operations[ops].inputs[idx] = -1;
+    g->nodes[ops].inputs[idx] = -1;
+}
+
+//-------------------------------------------
+
+int eitri_generateOutput(eitri_Graph* g, const char* outputName)
+{
+    for(int i = 0; i < g->outputCount; ++i)
+    {
+        if(strcmp(outputName, g->outputs[i].name) == 0)
+        {
+            eitri_doNode(g, g->outputs[i].node);
+
+            return i;
+        }
+    }
+
+    return -1;
 }
 
 //----- param management

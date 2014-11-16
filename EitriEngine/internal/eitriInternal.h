@@ -17,7 +17,14 @@ void eitri_op_noise(eitri_Graph* graph,  int opInst);
 void eitri_op_color(eitri_Graph* graph, int opInst);
 void eitri_op_multiply(eitri_Graph* graph, int opInst);
 
+void eitri_op_maskblend(eitri_Graph* graph, int opInstance);
+
 void eitri_op_brick(eitri_Graph* graph, int opInst);
 void eitri_op_perlin(eitri_Graph* graph, int opInst);
+void eitri_op_normalmap(eitri_Graph* graph, int opInst);
+
+//=========== op helpers =================================
+
+
 
 #endif // EITRIINTERNAL_H

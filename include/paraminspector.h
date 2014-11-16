@@ -24,6 +24,10 @@ public slots:
     void handleTextBox(QString s);
     void handleColorButton();
 
+    void handleRenaming();
+
+    void handleImgResize(int i);
+
     void randValue();
 
 protected:

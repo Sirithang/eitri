@@ -59,6 +59,7 @@ public:
     int op;
 
     QGraphicsTextItem headerText;
+    QGraphicsTextItem sizeText;
 
     NodeBox(GraphCanvas* pOwner, int pOp, bool pIsOutput);
     virtual ~NodeBox();
@@ -76,6 +77,11 @@ public:
 
 public slots:
     void exportResult();
+
+protected:
+    //used as optim. Wehn updating preview if node cahced data == this value
+    //then we didn't changed the image, so do nothing.
+    char* _cachedDataPtr;
 };
 
 

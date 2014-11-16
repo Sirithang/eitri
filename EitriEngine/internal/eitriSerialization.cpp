@@ -53,18 +53,33 @@ void eitri_serializeGraph(eitri_Graph *g, char *dest, int maxSize)
 {
     char* str = dest;
 
-    str += sprintf(str, "{\n\t\"seed\": %i,\n", g->seed);
-    str += sprintf(str, "\"nodes\": [ \n");
+    str += sprintf(str, "{\"seed\": %i,", g->seed);
+    str += sprintf(str, "\"nodes\": [ ");
 
-    for(int i = 0; i < g->operationsCount; ++i)
+    for(int i = 0; i < g->nodeCount; ++i)
     {
-        str = eitri_saveNode(&g->operations[i], str);
+        str = eitri_saveNode(&g->nodes[i], str);
 
-        if(i < g->operationsCount - 1)
-            str += sprintf(str, ",\n");
+        if(i < g->nodeCount - 1)
+            str += sprintf(str, ",");
     }
 
-    str += sprintf(str, "]\n");
+    str += sprintf(str, "],");
+
+
+    //-- save outputs
+
+     str += sprintf(str, "\"outputs\": [ ");
+
+    for(int i = 0; i < g->outputCount; ++i)
+    {
+        str += sprintf(str, "{ \"node\" : %i, \"name\" : \"%s\" }", g->outputs[i].node, g->outputs[i].name);
+
+        if(i < g->outputCount-1)
+            str += sprintf(str, ",");
+    }
+
+    str += sprintf(str, "]");
 
     str += sprintf(str, "}");
 }
@@ -73,11 +88,13 @@ void eitri_serializeGraph(eitri_Graph *g, char *dest, int maxSize)
 char* eitri_saveNode(eitri_NodeInstance *inst, char *out)
 {
     char* str = out;
-    str += sprintf(str, "{\n");
-    str += sprintf(str, "\t\"op\":%i,\n", inst->operation);
-    str += sprintf(str, "\t\"isOutput\":%i,\n", inst->isOutput);
+    str += sprintf(str, "{");
+    str += sprintf(str, "\"op\":%i,", inst->operation);
+    str += sprintf(str, "\"isOutput\":%i,", inst->isOutput);
 
-    str += sprintf(str, "\t\"inputs\":[");
+    str += sprintf(str, "\"width\":%i,\"height\":%i,", inst->_cachedResult.w, inst->_cachedResult.h);
+
+    str += sprintf(str, "\"inputs\":[");
     for(int i = 0; i < 16; ++i)
     {
         str += sprintf(str, "%i", inst->inputs[i]);
@@ -90,7 +107,7 @@ char* eitri_saveNode(eitri_NodeInstance *inst, char *out)
     if(inst->operation != -1)
     {
         eitri_Color tempCol;
-        str += sprintf(str, ",\n\"params\":[");
+        str += sprintf(str, ",\"params\":[");
         int nbParam = eitri_gOpsDB.ops[inst->operation].paramsCount;
         for(int i = 0; i < nbParam; ++i)
         {
@@ -111,13 +128,13 @@ char* eitri_saveNode(eitri_NodeInstance *inst, char *out)
             }
 
             if(i < nbParam - 1)
-                str += sprintf(str, ",\n");
+                str += sprintf(str, ",");
         }
 
         str += sprintf(str, "]");
     }
 
-    str += sprintf(str, "\n}\n");
+    str += sprintf(str, "}");
 
     return str;
 }
@@ -156,7 +173,7 @@ void eitri_deserializeGraph(eitri_Graph *g, const char *data)
             int nb = t->size;//number of entry in the array (nb of nodes)
             parser.pos++;
 
-            g->operationsCount = nb;
+            g->nodeCount = nb;
 
             for(int i = 0; i < nb; ++i)
             {//deserialize all nodes
@@ -165,7 +182,7 @@ void eitri_deserializeGraph(eitri_Graph *g, const char *data)
 
                 int length = t->end-t->start;
 
-                eitri_NodeInstance* opInst = &g->operations[i];
+                eitri_NodeInstance* opInst = &g->nodes[i];
 
                 //number of data inside the object (the node)
                 //divide db y 2 because it's of form, key:value
@@ -190,6 +207,20 @@ void eitri_deserializeGraph(eitri_Graph *g, const char *data)
                         parser.pos++;
 
                         opInst->isOutput = json_atoi(data, t);
+                    }
+                    else if(cmp_json_token(data, t, "width"))
+                    {
+                        t = &tokens[parser.pos];
+                        parser.pos++;
+
+                        opInst->_cachedResult.w = json_atoi(data, t);
+                    }
+                    else if(cmp_json_token(data, t, "height"))
+                    {
+                        t = &tokens[parser.pos];
+                        parser.pos++;
+
+                        opInst->_cachedResult.h = json_atoi(data, t);
                     }
                     else if(cmp_json_token(data, t, "inputs"))
                     {
@@ -277,6 +308,41 @@ void eitri_deserializeGraph(eitri_Graph *g, const char *data)
             }
 
 
+        }
+        else if(cmp_json_token(data, t, "outputs"))
+        {
+            t = &tokens[parser.pos];
+            int nb = t->size;//number of entry in the array (nb of nodes)
+            parser.pos++;
+
+            g->outputCount = nb;
+
+            for(int i = 0; i < nb; ++i)
+            {//deserialize all nodes
+                eitri_GraphOutput* output = &g->outputs[i];
+
+//@TODO make that more robust by actually testing keys as for the other things
+                parser.pos++;//pass the object token
+                parser.pos++; //pass the key "node"
+
+                t = &tokens[parser.pos];
+
+                if(t->type != JSMN_PRIMITIVE) *(char*)0x0 = 1; //test assert
+
+                output->node = json_atoi(data, t);
+
+                parser.pos++;//pass to the second key
+                parser.pos++; //jump over that key
+
+                 t = &tokens[parser.pos];
+                 parser.pos++;//this is to the next output object
+
+                if(t->type != JSMN_STRING) *(char*)0x0 = 1;
+
+                int length = t->end-t->start;
+                strncpy(output->name, data + t->start, length);
+                output->name[length] = 0;
+            }
         }
     }
 }

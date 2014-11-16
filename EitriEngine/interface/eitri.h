@@ -39,14 +39,14 @@ extern "C"
         float fParam;
         int iParam;
         eitri_Color colParam;
-        char sParam[2048];
+        char sParam[1024];
     } eitri_NodeParamValue;
 
     typedef struct
     {
         eitri_ParamType type;
         char name[256];
-        char tip[1024];
+        char tip[512];
     } eitri_NodeParams;
 
     //return the default value for given type ( for float, (0,0,0,1) for color )
@@ -60,27 +60,37 @@ extern "C"
         int inputs[16];
 
         //this got a 1:1 mapping to params in eitri_Operations
-        eitri_NodeParamValue paramsValues[32];
+        eitri_NodeParamValue paramsValues[8];
 
         eitri_PicturData _cachedResult;
-        int isOutput;
+        int isOutput; //0 if not output, outputidx + 1 if output (hackish but allow to keep track without 2 param)
+
+        //this flag is set by anything modifying the instance.
+        //if it's == 0 then the image isn't recomputed, and the cached data is used
+        int isDirty;
     } eitri_NodeInstance;
 
     //==========================================================
 
     typedef struct
     {
+        char name[256];
+        int node;
+    } eitri_GraphOutput;
+
+    typedef struct
+    {
         unsigned char   outputCount;
-        int             outputs[256];
+        eitri_GraphOutput     outputs[16];
 
         unsigned char       outputFreeCount;
-        unsigned char       outputFree[256];
+        unsigned char       outputFree[16];
 
-        unsigned int        operationsCount;
-        eitri_NodeInstance    operations[2048];
+        unsigned int        nodeCount;
+        eitri_NodeInstance    nodes[1024];
 
-        unsigned int        freeopsListCount;
-        unsigned int        freeops[1024];
+        unsigned int        freeNodeListCount;
+        unsigned int        freeNodes[512];
 
         unsigned int        seed;
     } eitri_Graph;
@@ -133,17 +143,24 @@ extern "C"
     void eitri_serializeGraph(eitri_Graph* g, char* dest, int maxSize);
     void eitri_deserializeGraph(eitri_Graph* g, const char* data);
 
-    int eitri_addOperation(eitri_Graph* g, const char* name);
-    void eitri_deleteOperation(eitri_Graph* g, int op);
+    int eitri_addNode(eitri_Graph* g, const char* name);
+    void eitri_deleteNode(eitri_Graph* g, int op);
+
+    void eitri_resizeNode(eitri_Graph* g, int node, int newSize);
 
     //execute the operation, calling recursivly execute on input
     //and stocking result in its _cachedData
-    void eitri_doOperation(eitri_Graph* g, int op);
+    void eitri_doNode(eitri_Graph* g, int op);
 
-    void eitri_connectOps(eitri_Graph* g, int inputOps, int outputOps, int idx);
-    void eitri_disconnectOps(eitri_Graph* g, int ops, int idx);
+    void eitri_connectNode(eitri_Graph* g, int inputOps, int outputOps, int idx);
+    void eitri_disconnectNode(eitri_Graph* g, int ops, int idx);
 
+    //generate the cachedData of input named "outputName", and return the index of the nodes (to read the data from embeded)
     int eitri_generateOutput(eitri_Graph* g, const char* outputName);
+
+    //return a pointer to the value which name is given. Allow to modify a param before generating an output.
+    // NOTE : only param that where marked as "exposed" can be accessed throught here
+    eitri_NodeParamValue* getValue(eitri_Graph* g, const char* name);
 
     //op here is the op template, not the op instance. This is rarely called by user
     //only in eitri_registerOperations to define all info

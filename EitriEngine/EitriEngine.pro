@@ -17,7 +17,8 @@ SOURCES += \
     internal/eitri.cpp \
     internal/eitriNodes.cpp \
     internal/eitriSerialization.cpp \
-    internal/jsmn.cpp
+    internal/jsmn.cpp \
+    internal/eitriHelpers.cpp
 
 HEADERS += \
     interface/eitri.h \

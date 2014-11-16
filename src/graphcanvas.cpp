@@ -12,6 +12,8 @@
 GraphCanvas::GraphCanvas(QWidget *parent) :
     QGraphicsView(parent)
 {
+    qDebug() << "eitrigraph size : " << sizeof(eitri_Graph)/1024/1024;
+
     g = new eitri_Graph();
     eitri_createGraph(g);
 
@@ -43,7 +45,7 @@ GraphCanvas::GraphCanvas(QWidget *parent) :
 
 void GraphCanvas::createOps(QPoint p, QString op)
 {
-    int id = eitri_addOperation(g, op.toLocal8Bit());
+    int id = eitri_addNode(g, op.toLocal8Bit());
 
     addOps(p, id);
 }
@@ -123,7 +125,7 @@ void GraphCanvas::recreateGraph()
     scene()->clear();
     clearAllNodes();
 
-    for(int i = 0; i < g->operationsCount; ++i)
+    for(int i = 0; i < g->nodeCount; ++i)
     {
         //@TODO : better reconstruction than random?
        addOps(QPoint((qrand()%400) - 200, (qrand()%400) - 200), i);
@@ -133,9 +135,9 @@ void GraphCanvas::recreateGraph()
     {
         for(int j = 0; j < 16; ++j)
         {
-            if(g->operations[i].inputs[j] != -1)
+            if(g->nodes[i].inputs[j] != -1)
             {
-                int out = g->operations[i].inputs[j];
+                int out = g->nodes[i].inputs[j];
 
                 outputsBox[out]->outConnector->connectTo(outputsBox[i]->inConnectors[j]);
             }

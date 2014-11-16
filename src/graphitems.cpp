@@ -76,7 +76,7 @@ void NodeConnector::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
 
             connectTo(c);
 
-            eitri_connectOps(owner->owner->g, input->owner->op, output->owner->op, input->id);
+            eitri_connectNode(owner->owner->g, input->owner->op, output->owner->op, input->id);
 
             return;//exit the function we have handled things
         }
@@ -137,7 +137,7 @@ void NodeConnector::disconnect()
     {//if input, just disconnect in graph
 
         if(owner->op != -1)//if op == -1, op was already deleted & disconnected in the Engine
-            eitri_disconnectOps(owner->owner->g, owner->op, id);
+            eitri_disconnectNode(owner->owner->g, owner->op, id);
 
         if(_connectedTo.count() == 1)
         {
@@ -176,6 +176,7 @@ NodeBox::NodeBox(GraphCanvas *pOwner, int pOp, bool pIsOutput)
     owner = pOwner;
     op = pOp;
     isOutput = pIsOutput;
+    _cachedDataPtr = NULL;
 
     outConnector = NULL;
 
@@ -184,7 +185,7 @@ NodeBox::NodeBox(GraphCanvas *pOwner, int pOp, bool pIsOutput)
     headerText.setParentItem(this);
 
 
-    int opTemplate = owner->g->operations[op].operation;
+    int opTemplate = owner->g->nodes[op].operation;
     int inpCount = eitri_gOpsDB.ops[opTemplate].inputImagesCount;
 
     int step = boundingRect().height() / inpCount;
@@ -203,7 +204,7 @@ NodeBox::NodeBox(GraphCanvas *pOwner, int pOp, bool pIsOutput)
         inConnectors.push_back(c);
     }
 
-    isOutput = owner->g->operations[op].isOutput;
+    isOutput = owner->g->nodes[op].isOutput;
 
     if(!isOutput)
     {
@@ -221,13 +222,20 @@ NodeBox::NodeBox(GraphCanvas *pOwner, int pOp, bool pIsOutput)
 
     headerText.setPlainText(eitri_gOpsDB.ops[opTemplate].name);
 
+    sizeText.setPlainText(QString::number(owner->g->nodes[op]._cachedResult.w)
+                          + QString("x")
+                          + QString::number(owner->g->nodes[op]._cachedResult.h));
+
+    sizeText.setParentItem(this);
+    sizeText.setPos(boundingRect().left(), boundingRect().bottom() + 3);
+
     updatePreview();
 }
 
 NodeBox::~NodeBox()
 {
     qDebug() << "Deleting op box ";
-    eitri_deleteOperation(owner->g, op);
+    eitri_deleteNode(owner->g, op);
     op = -1;
 
     if(outConnector)
@@ -246,10 +254,20 @@ NodeBox::~NodeBox()
 }
 
 void NodeBox::updatePreview()
-{
-    eitri_doOperation(owner->g, op);
+{    
+    eitri_doNode(owner->g, op);
 
-    eitri_NodeInstance* inst = &owner->g->operations[op];
+    eitri_NodeInstance* inst = &owner->g->nodes[op];
+
+    if(inst->isOutput)
+    {
+        headerText.setPlainText(owner->g->outputs[inst->isOutput - 1].name);
+    }
+
+    sizeText.setPlainText(QString::number(owner->g->nodes[op]._cachedResult.w)
+                          + QString("x")
+                          + QString::number(owner->g->nodes[op]._cachedResult.h));
+
 
     if(inst->_cachedResult.data)
     {
@@ -258,6 +276,8 @@ void NodeBox::updatePreview()
         preview = QPixmap::fromImage(img);
 
         owner->_previewLabel->setPixmap(preview);
+
+        //_cachedDataPtr = inst->_cachedResult.data;
     }
 
     update();
@@ -326,12 +346,12 @@ void NodeBox::mousePressEvent(QGraphicsSceneMouseEvent *event)
 
 void NodeBox::contextMenuEvent(QGraphicsSceneContextMenuEvent *event)
 {
-        QMenu menu;
-      QAction *exportAction = menu.addAction("Export...");
+    QMenu menu;
+    QAction *exportAction = menu.addAction("Export...");
 
-      exportAction->setProperty("opbox", QVariant((int)this));
+    exportAction->setProperty("opbox", QVariant((int)this));
 
-      QObject::connect(exportAction, SIGNAL(triggered()), owner, SLOT(exportNode()));
+    QObject::connect(exportAction, SIGNAL(triggered()), owner, SLOT(exportNode()));
 
-      menu.exec(event->screenPos());
+    menu.exec(event->screenPos());
 }

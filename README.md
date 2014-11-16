@@ -13,7 +13,7 @@ This tool is heavily influenced & inspired by Substance Designer. If you want pr
 Editor
 =====
 
-![Eitri screenshot](screenshot.jpg?raw=true "Editor screenshot")
+![Eitri screenshot](screenshot.png?raw=true "Editor screenshot")
 
 The editor is the first step for the texture creation. It's a node-based graph (know by artists as it's used in shaders editors for example) that define a series of transformation to applies to images (generated or imported) toward a named output.
 

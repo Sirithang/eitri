@@ -13,11 +13,15 @@ This tool is heavily influenced & inspired by Substance Designer. If you want pr
 Editor
 =====
 
+![Eitri screenshot](screenshot.jpg?raw=true "Editor screenshot")
+
 The editor is the first step for the texture creation. It's a node-based graph (know by artists as it's used in shaders editors for example) that define a series of transformation to applies to images (generated or imported) toward a named output.
 
 That graph can then be saved to be used in the embeddable engine, or output can be exported to simple image to be used in any other applications as any other images.
 
 Nodes have parameters and some can be "exposed" to be modified in C by the user.
+
+To add a node, press *Space* inside the graph display, and choose in the list the one you want (double click to add)
 
 Library
 =====
@@ -30,8 +34,18 @@ Users can then query the for a specific output and the lib will return a buffer 
 
 If the graph creator have exposed parameters, they can be set before asking for the end picture, changing the output.
 
+Use example in engine
+
+	eitri_init();
+	eitri_Graph g = new eitri_Graph(); //need to be dynamic, 1 inst == 8Mb
+	eitri_deserializeGraph(g, fileContent); //fileContent is the file content of a .eit file
+	int nodeIdx = eitri_generateOutput(g, "diffuse"); //is the graph have an output named "diffuse"
+	
+	eitri_NodeInstance* node = &g->nodes[nodeIdx];
+	node->_cachedData.data;//contain the bitmap data
+	node->_cachedData.w;//contain width of image. Same with h
 
 Building
 ======
 
-The lib try to have no dependency other than itself. The source code can be compiled however you want, and your application only have to
+The lib try to have no dependency other than itself. The source code can be compiled however you want, and your application only have to include "eitri.h" located in EitriEngine/include

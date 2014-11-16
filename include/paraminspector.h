@@ -13,7 +13,7 @@ class ParamInspector : public QWidget
 public:
     explicit ParamInspector(QWidget *parent = 0);
 
-    void setGraphItem(OperationBox* b);
+    void setGraphItem(NodeBox* b);
 
 signals:
 
@@ -31,7 +31,7 @@ protected:
 
     QList<QObject*> _instanciated;
 
-    OperationBox* _opBox;
+    NodeBox* _opBox;
 };
 
 #endif // PARAMINSPECTOR_H

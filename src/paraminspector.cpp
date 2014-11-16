@@ -32,7 +32,7 @@ ParamInspector::ParamInspector(QWidget *parent) :
     setLayout(layout);
 }
 
-void ParamInspector::setGraphItem(OperationBox *b)
+void ParamInspector::setGraphItem(NodeBox *b)
 {
     while(_instanciated.count() > 0)
     {
@@ -44,8 +44,8 @@ void ParamInspector::setGraphItem(OperationBox *b)
 
     if(b)
     {
-        eitri_OpInstance* inst = &b->owner->g->operations[b->op];
-        eitri_Operation* op = &eitri_gOpsDB.ops[b->owner->g->operations[b->op].operation];
+        eitri_NodeInstance* inst = &b->owner->g->operations[b->op];
+        eitri_Node* op = &eitri_gOpsDB.ops[b->owner->g->operations[b->op].operation];
 
         for(int i = 0; i < op->paramsCount; ++i)
         {

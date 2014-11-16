@@ -7,7 +7,7 @@
 #include <math.h>
 
 
-eitri_OpsDatabase eitri_gOpsDB;
+eitri_NodesDatabase eitri_gOpsDB;
 
 
 void eitri_init()
@@ -144,9 +144,9 @@ char* eitri_samplePictureData(eitri_PicturData *d, float u, float v)
 
 //---------------- Params
 
-eitri_OpParamValue eitri_getDefaultParamValue(eitri_ParamType type)
+eitri_NodeParamValue eitri_getDefaultParamValue(eitri_ParamType type)
 {
-    eitri_OpParamValue val;
+    eitri_NodeParamValue val;
 
     switch(type)
     {
@@ -196,7 +196,7 @@ void eitri_getOutput(eitri_Graph *g, const char *outputName)
 
 void eitri_initOp(eitri_Graph* g, int idx, int opIdx)
 {
-    eitri_OpInstance* inst = &g->operations[idx];
+    eitri_NodeInstance* inst = &g->operations[idx];
     inst->operation = opIdx;
 
     inst->isOutput = 0;
@@ -275,7 +275,7 @@ int eitri_addOperation(eitri_Graph *g, const char *name)
 
 void eitri_deleteOperation(eitri_Graph *g, int op)
 {
-    eitri_OpInstance* inst = &g->operations[op];
+    eitri_NodeInstance* inst = &g->operations[op];
 
     for(int i = 0; i < eitri_gOpsDB.ops[inst->operation].inputImagesCount; ++i)
     {
@@ -307,7 +307,7 @@ void eitri_doOperation(eitri_Graph *g, int op)
 
 void eitri_connectOps(eitri_Graph *g, int inputOps, int outputOps, int idx)
 {
-    eitri_OpInstance* in = &g->operations[inputOps];
+    eitri_NodeInstance* in = &g->operations[inputOps];
 
     in->inputs[idx] = outputOps;
 }

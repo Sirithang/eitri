@@ -24,13 +24,13 @@
 
 void eitri_op_output(eitri_Graph* graph,  int opInst)
 {
-    eitri_OpInstance* inst = &graph->operations[opInst];
+    eitri_NodeInstance* inst = &graph->operations[opInst];
 
     if(inst->inputs[0] == -1)
         return;
 
     eitri_doOperation(graph, inst->inputs[0]);
-    eitri_OpInstance* input1 = &graph->operations[inst->inputs[0]];
+    eitri_NodeInstance* input1 = &graph->operations[inst->inputs[0]];
 
     if(input1->_cachedResult.data == 0)
         return;
@@ -48,7 +48,7 @@ void eitri_op_output(eitri_Graph* graph,  int opInst)
 
 void eitri_op_noise(eitri_Graph* graph,  int opInst)
 {
-    eitri_OpInstance* inst = &graph->operations[opInst];
+    eitri_NodeInstance* inst = &graph->operations[opInst];
 
     eitri_allocatePictureData(&inst->_cachedResult);
 
@@ -70,7 +70,7 @@ void eitri_op_noise(eitri_Graph* graph,  int opInst)
 
 void eitri_op_color(eitri_Graph *graph, int opInst)
 {
-    eitri_OpInstance* inst = &graph->operations[opInst];
+    eitri_NodeInstance* inst = &graph->operations[opInst];
 
     eitri_allocatePictureData(&inst->_cachedResult);
 
@@ -82,7 +82,7 @@ void eitri_op_color(eitri_Graph *graph, int opInst)
 
 void eitri_op_multiply(eitri_Graph *graph, int opInst)
 {
-    eitri_OpInstance* inst = &graph->operations[opInst];
+    eitri_NodeInstance* inst = &graph->operations[opInst];
 
     if(inst->inputs[0] == -1 || inst->inputs[1] == -1)
         return;
@@ -90,8 +90,8 @@ void eitri_op_multiply(eitri_Graph *graph, int opInst)
     eitri_doOperation(graph, inst->inputs[0]);
     eitri_doOperation(graph, inst->inputs[1]);
 
-    eitri_OpInstance* input1 = &graph->operations[inst->inputs[0]];
-    eitri_OpInstance* input2 = &graph->operations[inst->inputs[1]];
+    eitri_NodeInstance* input1 = &graph->operations[inst->inputs[0]];
+    eitri_NodeInstance* input2 = &graph->operations[inst->inputs[1]];
 
      eitri_allocatePictureData(&inst->_cachedResult);
 
@@ -111,7 +111,7 @@ void eitri_op_multiply(eitri_Graph *graph, int opInst)
 
 void eitri_op_brick(eitri_Graph *graph, int opInst)
 {
-    eitri_OpInstance* inst = &graph->operations[opInst];
+    eitri_NodeInstance* inst = &graph->operations[opInst];
 
     eitri_allocatePictureData(&inst->_cachedResult);
 
@@ -195,7 +195,7 @@ void eitri_op_brick(eitri_Graph *graph, int opInst)
 
 void eitri_op_perlin(eitri_Graph* graph, int opInst)
 {
-    eitri_OpInstance* inst = &graph->operations[opInst];
+    eitri_NodeInstance* inst = &graph->operations[opInst];
 
     eitri_allocatePictureData(&inst->_cachedResult);
 

@@ -22,7 +22,7 @@ public:
     explicit GraphCanvas(QWidget *parent = 0);
 
     eitri_Graph* g;
-    OperationBox* _selected;
+    NodeBox* _selected;
     QGraphicsScene _scene;
 
     ImageLabel* _previewLabel;
@@ -43,7 +43,7 @@ protected:
 
     void recreateGraph();
 
-    QList<OperationBox*> outputsBox;
+    QList<NodeBox*> outputsBox;
     QPoint _pressPos;
 
 signals:

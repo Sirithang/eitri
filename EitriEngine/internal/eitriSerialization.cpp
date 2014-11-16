@@ -70,7 +70,7 @@ void eitri_serializeGraph(eitri_Graph *g, char *dest, int maxSize)
 }
 
 
-char* eitri_saveNode(eitri_OpInstance *inst, char *out)
+char* eitri_saveNode(eitri_NodeInstance *inst, char *out)
 {
     char* str = out;
     str += sprintf(str, "{\n");
@@ -165,7 +165,7 @@ void eitri_deserializeGraph(eitri_Graph *g, const char *data)
 
                 int length = t->end-t->start;
 
-                eitri_OpInstance* opInst = &g->operations[i];
+                eitri_NodeInstance* opInst = &g->operations[i];
 
                 //number of data inside the object (the node)
                 //divide db y 2 because it's of form, key:value

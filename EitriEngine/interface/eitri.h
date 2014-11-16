@@ -40,17 +40,17 @@ extern "C"
         int iParam;
         eitri_Color colParam;
         char sParam[2048];
-    } eitri_OpParamValue;
+    } eitri_NodeParamValue;
 
     typedef struct
     {
         eitri_ParamType type;
         char name[256];
         char tip[1024];
-    } eitri_OpParams;
+    } eitri_NodeParams;
 
     //return the default value for given type ( for float, (0,0,0,1) for color )
-    eitri_OpParamValue eitri_getDefaultParamValue(eitri_ParamType type);
+    eitri_NodeParamValue eitri_getDefaultParamValue(eitri_ParamType type);
 
     //=========================================================
 
@@ -60,11 +60,11 @@ extern "C"
         int inputs[16];
 
         //this got a 1:1 mapping to params in eitri_Operations
-        eitri_OpParamValue paramsValues[32];
+        eitri_NodeParamValue paramsValues[32];
 
         eitri_PicturData _cachedResult;
         int isOutput;
-    } eitri_OpInstance;
+    } eitri_NodeInstance;
 
     //==========================================================
 
@@ -77,7 +77,7 @@ extern "C"
         unsigned char       outputFree[256];
 
         unsigned int        operationsCount;
-        eitri_OpInstance    operations[2048];
+        eitri_NodeInstance    operations[2048];
 
         unsigned int        freeopsListCount;
         unsigned int        freeops[1024];
@@ -90,7 +90,7 @@ extern "C"
 
     //inst is the instance of the operation. It contain all info for
     //doing the op (connected input, where to output etc...
-    typedef void (*eitri_opFunc)(eitri_Graph* graph, int opInst);
+    typedef void (*eitri_NodeFunc)(eitri_Graph* graph, int opInst);
 
     typedef struct
     {
@@ -98,9 +98,9 @@ extern "C"
         unsigned char inputImagesCount;
 
         //this function is called to perform the operation
-        eitri_opFunc func;
+        eitri_NodeFunc func;
 
-        eitri_OpParams params[32];
+        eitri_NodeParams params[32];
         unsigned int paramsCount;
 
         //if this is -1, size is dynamic. If set, node only operate in that size*size
@@ -108,17 +108,17 @@ extern "C"
         int size;
 
         char name[256];
-    } eitri_Operation;
+    } eitri_Node;
 
     //===========================================================
 
     typedef struct
     {
         int         opsCount;
-        eitri_Operation   ops[1024];
-    } eitri_OpsDatabase;
+        eitri_Node   ops[1024];
+    } eitri_NodesDatabase;
 
-    extern eitri_OpsDatabase eitri_gOpsDB;
+    extern eitri_NodesDatabase eitri_gOpsDB;
 
     void eitri_init();
 

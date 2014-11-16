@@ -52,7 +52,7 @@ void GraphCanvas::addOps(QPoint p, int op)
 {
     if(op != -1)
     {
-        OperationBox* b = new OperationBox(this, op, false);
+        NodeBox* b = new NodeBox(this, op, false);
 
         b->setPos(mapToScene(mapFromGlobal(p)));
         b->setFlags(QGraphicsItem::ItemIsMovable | QGraphicsItem::ItemIsSelectable);
@@ -163,7 +163,7 @@ void GraphCanvas::updateInspector()
         selectedItems.pop_front();
     }
 
-    _selected = (OperationBox*)selectedItems.front();
+    _selected = (NodeBox*)selectedItems.front();
 
     blockSignals(false);
 
@@ -174,7 +174,7 @@ void GraphCanvas::exportNode()
 {
     QAction* a = (QAction*)QObject::sender();
 
-    OperationBox* b = (OperationBox*)a->property("opbox").toInt();
+    NodeBox* b = (NodeBox*)a->property("opbox").toInt();
 
     b->exportResult();
 }

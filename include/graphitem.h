@@ -3,23 +3,23 @@
 
 #include <QGraphicsItem>
 
-class OperationBox;
-class OperationConnector;
+class NodeBox;
+class NodeConnector;
 class GraphCanvas;
 
 enum ItemType { TypeConnector = QGraphicsItem::UserType + 1,
                 TypeBox = QGraphicsItem::UserType + 2 };
 
-class OperationConnector : public QGraphicsItem
+class NodeConnector : public QGraphicsItem
 {
 public:
-    OperationBox* owner;
+    NodeBox* owner;
     int id;
     bool isInput;
 
     //input will always have AT MOST one connected output
     //output can have multiple input connected to them
-    QList<OperationConnector*>  _connectedTo;
+    QList<NodeConnector*>  _connectedTo;
 
     //connecting spline. this is owned by the OUTPUT
     //an input will always have 0 spline. If the input owner is deleted
@@ -28,8 +28,8 @@ public:
 
     int type() const { return TypeConnector; }
 
-    OperationConnector();
-    ~OperationConnector();
+    NodeConnector();
+    ~NodeConnector();
 
     QRectF boundingRect() const;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
@@ -41,18 +41,18 @@ public:
 
     void updateSpline();
 
-    void connectTo(OperationConnector* other);
+    void connectTo(NodeConnector* other);
     void disconnect();
 };
 
-class OperationBox : public QGraphicsItem
+class NodeBox : public QGraphicsItem
 {
 public:
     GraphCanvas* owner;
     bool isOutput;
 
-    QList<OperationConnector*>  inConnectors;
-    OperationConnector*         outConnector;
+    QList<NodeConnector*>  inConnectors;
+    NodeConnector*         outConnector;
 
     QPixmap preview;
 
@@ -60,8 +60,8 @@ public:
 
     QGraphicsTextItem headerText;
 
-    OperationBox(GraphCanvas* pOwner, int pOp, bool pIsOutput);
-    virtual ~OperationBox();
+    NodeBox(GraphCanvas* pOwner, int pOp, bool pIsOutput);
+    virtual ~NodeBox();
 
     void updatePreview();
 

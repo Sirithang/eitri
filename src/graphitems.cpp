@@ -13,22 +13,22 @@
 
 //-----------------------------------------
 
-OperationConnector::OperationConnector()
+NodeConnector::NodeConnector()
 {
     setFlags(0);
 }
 
-OperationConnector::~OperationConnector()
+NodeConnector::~NodeConnector()
 {
     disconnect();
 }
 
-QRectF OperationConnector::boundingRect() const
+QRectF NodeConnector::boundingRect() const
 {
     return QRectF(-CIRCLE_SIZE,-CIRCLE_SIZE,CIRCLE_SIZE*2,CIRCLE_SIZE*2);
 }
 
-void OperationConnector::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
+void NodeConnector::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
     QRectF bbox = boundingRect();
 
@@ -38,13 +38,13 @@ void OperationConnector::paint(QPainter *painter, const QStyleOptionGraphicsItem
     painter->drawEllipse(bbox);
 }
 
-void OperationConnector::mousePressEvent(QGraphicsSceneMouseEvent *event)
+void NodeConnector::mousePressEvent(QGraphicsSceneMouseEvent *event)
 {
     _splines.push_back(new QGraphicsPathItem());
     scene()->addItem(_splines.back());
 }
 
-void OperationConnector::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
+void NodeConnector::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
 {
     QPainterPath p(this->scenePos());
 
@@ -53,7 +53,7 @@ void OperationConnector::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
     _splines.back()->setPath(p);
 }
 
-void OperationConnector::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
+void NodeConnector::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
 {
     _splines.back()->setVisible(false);
     QGraphicsItem* item = scene()->itemAt(event->scenePos(), QTransform());
@@ -62,7 +62,7 @@ void OperationConnector::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
 
     if(item && item->type() == TypeConnector)
     {
-        OperationConnector* c = (OperationConnector*)item;
+        NodeConnector* c = (NodeConnector*)item;
         if(isInput != c->isInput)
         {//we can't pair input w/ input or output w/ output
 
@@ -71,8 +71,8 @@ void OperationConnector::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
             delete _splines.last();
             _splines.removeLast();
 
-            OperationConnector* input = isInput ? this : c;
-            OperationConnector* output = isInput ? c : this;
+            NodeConnector* input = isInput ? this : c;
+            NodeConnector* output = isInput ? c : this;
 
             connectTo(c);
 
@@ -89,9 +89,9 @@ void OperationConnector::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
     _splines.removeLast();
 }
 
-void OperationConnector::updateSpline()
+void NodeConnector::updateSpline()
 {
-    OperationConnector* target = this;
+    NodeConnector* target = this;
     if(isInput)
     {
         if(_connectedTo.count() != 0)
@@ -112,10 +112,10 @@ void OperationConnector::updateSpline()
     }
 }
 
-void OperationConnector::connectTo(OperationConnector *other)
+void NodeConnector::connectTo(NodeConnector *other)
 {
-    OperationConnector* input = isInput ? this : other;
-    OperationConnector* output = isInput ? other : this;
+    NodeConnector* input = isInput ? this : other;
+    NodeConnector* output = isInput ? other : this;
 
     output->_splines.append(new QGraphicsPathItem());
     scene()->addItem(output->_splines.last());
@@ -131,7 +131,7 @@ void OperationConnector::connectTo(OperationConnector *other)
     output->updateSpline();
 }
 
-void OperationConnector::disconnect()
+void NodeConnector::disconnect()
 {
     if(isInput)
     {//if input, just disconnect in graph
@@ -171,7 +171,7 @@ void OperationConnector::disconnect()
 
 //-----------------------------------------
 
-OperationBox::OperationBox(GraphCanvas *pOwner, int pOp, bool pIsOutput)
+NodeBox::NodeBox(GraphCanvas *pOwner, int pOp, bool pIsOutput)
 {
     owner = pOwner;
     op = pOp;
@@ -192,7 +192,7 @@ OperationBox::OperationBox(GraphCanvas *pOwner, int pOp, bool pIsOutput)
 
     for(int i = 0 ; i < inpCount; ++i)
     {
-        OperationConnector* c = new OperationConnector();
+        NodeConnector* c = new NodeConnector();
         c->owner = this;
         c->id = i;
         c->isInput = true;
@@ -208,7 +208,7 @@ OperationBox::OperationBox(GraphCanvas *pOwner, int pOp, bool pIsOutput)
     if(!isOutput)
     {
         //OUTPUT
-        OperationConnector* c = new OperationConnector();
+        NodeConnector* c = new NodeConnector();
         c->owner = this;
         c->id = 0;
         c->isInput = false;
@@ -224,7 +224,7 @@ OperationBox::OperationBox(GraphCanvas *pOwner, int pOp, bool pIsOutput)
     updatePreview();
 }
 
-OperationBox::~OperationBox()
+NodeBox::~NodeBox()
 {
     qDebug() << "Deleting op box ";
     eitri_deleteOperation(owner->g, op);
@@ -245,11 +245,11 @@ OperationBox::~OperationBox()
     inConnectors.clear();
 }
 
-void OperationBox::updatePreview()
+void NodeBox::updatePreview()
 {
     eitri_doOperation(owner->g, op);
 
-    eitri_OpInstance* inst = &owner->g->operations[op];
+    eitri_NodeInstance* inst = &owner->g->operations[op];
 
     if(inst->_cachedResult.data)
     {
@@ -263,7 +263,7 @@ void OperationBox::updatePreview()
     update();
 }
 
-void OperationBox::exportResult()
+void NodeBox::exportResult()
 {
     QString filename = QFileDialog::getSaveFileName(NULL, "Export...", QString(), "*.png");
 
@@ -275,12 +275,12 @@ void OperationBox::exportResult()
     preview.save(filename, "PNG");
 }
 
-QRectF OperationBox::boundingRect() const
+QRectF NodeBox::boundingRect() const
  {
      return QRectF(0, 0, 100, 80);
  }
 
-void OperationBox::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
+void NodeBox::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
     QRectF bbox = boundingRect();
 
@@ -306,7 +306,7 @@ void OperationBox::paint(QPainter *painter, const QStyleOptionGraphicsItem *opti
 
 //----------------------
 
-void OperationBox::mouseMoveEvent(QGraphicsSceneMouseEvent * event)
+void NodeBox::mouseMoveEvent(QGraphicsSceneMouseEvent * event)
 {
     for(int i = 0; i < inConnectors.count();++i)
     {
@@ -319,12 +319,12 @@ void OperationBox::mouseMoveEvent(QGraphicsSceneMouseEvent * event)
     QGraphicsItem::mouseMoveEvent(event);
 }
 
-void OperationBox::mousePressEvent(QGraphicsSceneMouseEvent *event)
+void NodeBox::mousePressEvent(QGraphicsSceneMouseEvent *event)
 {
     updatePreview();
 }
 
-void OperationBox::contextMenuEvent(QGraphicsSceneContextMenuEvent *event)
+void NodeBox::contextMenuEvent(QGraphicsSceneContextMenuEvent *event)
 {
         QMenu menu;
       QAction *exportAction = menu.addAction("Export...");

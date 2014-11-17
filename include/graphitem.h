@@ -65,6 +65,7 @@ public:
     virtual ~NodeBox();
 
     void updatePreview();
+    void remove();
 
     int type() const{ return TypeBox; }
 

@@ -234,23 +234,7 @@ NodeBox::NodeBox(GraphCanvas *pOwner, int pOp, bool pIsOutput)
 
 NodeBox::~NodeBox()
 {
-    qDebug() << "Deleting op box ";
-    eitri_deleteNode(owner->g, op);
-    op = -1;
-
-    if(outConnector)
-    {
-        scene()->removeItem(outConnector);
-        delete outConnector;
-    }
-
-    for(int i = 0; i < inConnectors.count(); ++i)
-    {
-        scene()->removeItem(inConnectors[i]);
-        delete inConnectors[i];
-    }
-
-    inConnectors.clear();
+    remove();
 }
 
 void NodeBox::updatePreview()
@@ -281,6 +265,30 @@ void NodeBox::updatePreview()
     }
 
     update();
+}
+
+void NodeBox::remove()
+{
+    if(op == -1)
+        return;
+
+    eitri_deleteNode(owner->g, op);
+    op = -1;
+
+    if(outConnector)
+    {
+        //need to sue scene of owner, as if deleted once remove from scene, scene() return null
+        owner->scene()->removeItem(outConnector);
+        delete outConnector;
+    }
+
+    for(int i = 0; i < inConnectors.count(); ++i)
+    {
+        owner->scene()->removeItem(inConnectors[i]);
+        delete inConnectors[i];
+    }
+
+    inConnectors.clear();
 }
 
 void NodeBox::exportResult()

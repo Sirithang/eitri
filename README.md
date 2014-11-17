@@ -10,6 +10,9 @@ Since some parameters can be changed before generation, it also allow to create 
 
 This tool is heavily influenced & inspired by Substance Designer. If you want professional grade tools & support, check : http://www.allegorithmic.com/products/substance-designer
 
+*NOTE* : current version is a pre-alpha made for the procjam. It was made in less than a week during evening, so it's terribly buggy and lacking features. Give it a spin if you feel adventurous though, and report feedback/wishes!
+
+
 Editor
 =====
 

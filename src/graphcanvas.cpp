@@ -90,8 +90,9 @@ void GraphCanvas::keyPressEvent(QKeyEvent *e)
     {
         if(_selected)
         {
+            NodeBox* temp = _selected; // need to stock, removeItem while deselect it before we call delete
             scene()->removeItem(_selected);
-            delete _selected;
+            delete temp;
         }
     }
     else
